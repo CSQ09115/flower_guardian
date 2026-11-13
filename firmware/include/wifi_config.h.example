@@ -1,0 +1,14 @@
+/**
+ * 配置模板 —— 复制本文件为 wifi_config.h 后填入自己的参数
+ * （wifi_config.h 含 WiFi 密码，已在 .gitignore 中忽略，不要提交）
+ */
+#pragma once
+
+#define WIFI_SSID "你的WiFi名称"        // 必须是 2.4GHz 频段的 WiFi
+#define WIFI_PASSWORD "你的WiFi密码"
+
+#define SERVER_HOST "192.168.1.16"     // 运行后台服务的电脑的局域网 IP（ipconfig 查）
+#define SERVER_PORT 8001
+
+#define DEVICE_CODE "FG-ESP32-001"     // 设备编号，多台设备改最后三位
+#define REPORT_INTERVAL 10000          // 上报间隔（毫秒）

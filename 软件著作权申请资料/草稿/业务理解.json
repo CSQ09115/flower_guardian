@@ -1,0 +1,268 @@
+{
+  "software_name": "护花使者植物养护管理系统",
+  "business_understanding_required": true,
+  "source_documents": [
+    {
+      "path": "AGENTS.md",
+      "size": 7695
+    },
+    {
+      "path": "CLAUDE.md",
+      "size": 7550
+    },
+    {
+      "path": "README.md",
+      "size": 11701
+    },
+    {
+      "path": "cv-model-usage-guide.md",
+      "size": 15615
+    },
+    {
+      "path": "design.md",
+      "size": 3725
+    },
+    {
+      "path": "APP/README.md",
+      "size": 9253
+    },
+    {
+      "path": "backend/README.md",
+      "size": 5848
+    },
+    {
+      "path": "backend/requirements.txt",
+      "size": 451
+    },
+    {
+      "path": "dataset/README.md",
+      "size": 2078
+    },
+    {
+      "path": "dataset/requirements.txt",
+      "size": 44
+    },
+    {
+      "path": "docs/README.md",
+      "size": 1464
+    },
+    {
+      "path": "docs/WINDOWS_GPU_TRAINING.md",
+      "size": 2188
+    },
+    {
+      "path": "docs/push-notification-design.md",
+      "size": 5890
+    },
+    {
+      "path": "web/README.md",
+      "size": 2574
+    },
+    {
+      "path": "docs/plans/2025-03-10-ui-kitten-migration-design.md",
+      "size": 6839
+    },
+    {
+      "path": "docs/plans/2025-03-10-ui-kitten-migration-plan.md",
+      "size": 20458
+    },
+    {
+      "path": "docs/plans/2026-03-08-backend-design.md",
+      "size": 3431
+    },
+    {
+      "path": "docs/plans/2026-03-08-backend-implementation.md",
+      "size": 53564
+    },
+    {
+      "path": "docs/plans/2026-03-08-dual-yolo-implementation-plan.md",
+      "size": 40078
+    },
+    {
+      "path": "docs/plans/2026-03-08-dual-yolo-model-design.md",
+      "size": 7632
+    },
+    {
+      "path": "docs/plans/2026-03-10-admin-extended-features-design.md",
+      "size": 3459
+    },
+    {
+      "path": "docs/plans/2026-03-10-admin-extended-features-implementation.md",
+      "size": 32355
+    },
+    {
+      "path": "docs/plans/2026-03-10-admin-web-order-system-design.md",
+      "size": 5783
+    },
+    {
+      "path": "docs/plans/2026-03-10-admin-web-order-system-implementation.md",
+      "size": 64501
+    },
+    {
+      "path": "docs/plans/2026-03-10-react-native-icon-design.md",
+      "size": 3395
+    },
+    {
+      "path": "docs/plans/2026-03-10-react-native-icon-implementation.md",
+      "size": 8829
+    },
+    {
+      "path": "docs/plans/2026-03-11-admin-web-styling.md",
+      "size": 1882
+    },
+    {
+      "path": "docs/plans/2026-03-11-diary-screen-design.md",
+      "size": 5517
+    },
+    {
+      "path": "docs/plans/2026-03-11-diary-screen-implementation.md",
+      "size": 37706
+    },
+    {
+      "path": "docs/plans/2026-03-11-mobile-enhancement-implementation.md",
+      "size": 41418
+    },
+    {
+      "path": "docs/plans/2026-03-11-mobile-shopping-diagnosis-enhancement-design.md",
+      "size": 9017
+    },
+    {
+      "path": "docs/plans/2026-03-12-address-management-design.md",
+      "size": 3011
+    },
+    {
+      "path": "docs/plans/2026-03-12-address-management-implementation.md",
+      "size": 22930
+    },
+    {
+      "path": "docs/plans/2026-03-12-email-verification-design.md",
+      "size": 2448
+    },
+    {
+      "path": "docs/plans/2026-03-12-email-verification-implementation.md",
+      "size": 11324
+    },
+    {
+      "path": "docs/plans/2026-03-12-encyclopedia-category-design.md",
+      "size": 2303
+    },
+    {
+      "path": "docs/plans/2026-03-12-encyclopedia-category-implementation.md",
+      "size": 3758
+    },
+    {
+      "path": "docs/plans/2026-03-12-header-modernization-design.md",
+      "size": 3735
+    },
+    {
+      "path": "docs/plans/2026-03-12-plant-encyclopedia-api.md",
+      "size": 5628
+    },
+    {
+      "path": "docs/plans/2026-03-12-plant-recognition-design.md",
+      "size": 5862
+    }
+  ],
+  "project_evidence_file": "业务理解证据.md",
+  "product_positioning": "一款面向家庭养花和室内绿植管理场景的移动端植物养护管理软件，围绕植物识别、养护记录、提醒管理、病害诊断和知识查询，帮助用户建立从识别到持续养护的完整管理流程。",
+  "industry": "家庭园艺与植物养护服务软件领域",
+  "target_users": [
+    "缺少养护经验、希望通过手机完成植物识别和日常管理的家庭养花用户",
+    "在租房、办公室等室内场景摆放绿植，需要简单提醒和百科指导的城市用户",
+    "希望长期记录植物成长过程、查看养护历史并进行日记分享的园艺爱好者"
+  ],
+  "core_value": "通过图像识别、智能提醒、问答推荐和养护记录能力，把分散的植物识别、病害判断、知识查询和日常打卡整合到同一软件中，降低新手用户养花门槛，帮助用户更稳定地完成植物管理。",
+  "business_features": [
+    "植物识别与识别结果展示",
+    "个人花园与植物档案管理",
+    "养护百科与知识查询",
+    "智能提醒与养护待办管理",
+    "病虫害诊断与AI问诊",
+    "新手推荐与场景化选植物",
+    "养花日记、生长记录与商城配套服务"
+  ],
+  "business_feature_details": {
+    "植物识别与识别结果展示": "软件提供拍照识别和相册导入入口，用户上传植物图片后，系统调用后端识别服务返回植物名称、置信度、检测框和相关结果，并在首页直接展示识别卡片、天气提示和推荐植物内容，形成较强的首屏使用入口。",
+    "个人花园与植物档案管理": "用户可将植物添加到“我的花园”，录入植物名称、昵称和摆放位置，并在花园页面查看植物列表、位置分类、养护记录和统计信息。系统支持编辑植物资料、删除植物、快速记录浇水等日常操作，便于持续维护个人植物档案。",
+    "养护百科与知识查询": "软件提供植物百科、分类筛选、难度分级、搜索查询和热门植物展示功能，帮助用户按植物类别、养护难度和关键词查找内容。百科页面结合图文信息展示植物基础资料、养护提示和常见误区，满足用户日常查阅需求。",
+    "智能提醒与养护待办管理": "用户可针对自己的植物创建浇水、施肥、修剪等提醒，设置提醒周期并启用或停用提醒。系统会展示活跃提醒数、今日待办数量、下一次到期时间和天气相关提示，并支持完成提醒、删除提醒等操作，帮助用户形成稳定的养护节奏。",
+    "病虫害诊断与AI问诊": "软件支持通过拍照或相册图片进行病虫害识别，返回病害名称、置信度、严重程度、处理建议、防治说明和检测框信息。诊断完成后，用户可将诊断结果保存为历史记录，并进入AI问诊页面继续咨询后续养护和处理建议，形成从发现问题到继续问诊的闭环流程。",
+    "新手推荐与场景化选植物": "软件通过问答方式收集用户的光照情况、浇水习惯、养护目的、家中宠物儿童情况和养花经验，再根据答案生成植物推荐结果。推荐页面会显示匹配度、推荐原因、植物特点和是否有毒等信息，并支持将推荐植物直接加入花园。",
+    "养花日记、生长记录与商城配套服务": "软件支持用户记录养花日记、上传图片、查看日记详情、按植物筛选内容，并进入生长曲线页面查看成长趋势。除记录功能外，项目还提供商品浏览、购物车、订单管理和管理后台能力，使植物养护内容与配套商品服务形成完整的软件应用场景。"
+  },
+  "operation_flow": [
+    "用户进入软件首页后，可查看天气与养护提示，并通过拍照或相册选择图片完成植物识别或病害诊断。",
+    "识别成功后，用户可根据结果将植物加入个人花园，补充植物昵称和摆放位置，建立个人植物档案。",
+    "用户在花园页面查看自己的植物列表和养护统计，并为不同植物创建浇水、施肥或修剪提醒。",
+    "在日常使用中，用户可进入植物百科查询植物资料，或通过新手推荐问答获取适合自己场景的植物建议。",
+    "当植物出现黄叶、斑点、虫害等情况时，用户可再次上传图片进行诊断，并在结果页继续发起AI问诊获取处理建议。",
+    "用户可持续记录养花日记、生长数据和历史诊断结果，必要时浏览商城商品并完成下单购买。"
+  ],
+  "application_purpose": "本软件用于解决家庭养花和室内绿植管理过程中识别难、养护难、提醒分散、病害判断不及时和记录不连续的问题，为用户提供植物识别、养护查询、日常提醒、病害诊断、问答推荐和成长记录等一体化管理工具。",
+  "main_functions": "软件主要包括植物图片识别、病虫害诊断、个人花园管理、植物资料查询、智能提醒管理、场景化植物推荐、养花日记记录、生长曲线查看、AI问诊、商品浏览与订单管理、后台数据管理等功能。",
+  "technical_characteristics": "软件采用移动端与后端服务协同的技术方案，前端包含微信小程序端和移动应用端，后端提供用户、植物、提醒、日记、识别、诊断、推荐、商城、订单和管理后台接口。系统集成植物识别模型、病虫害识别模型、天气提示服务、AI问答服务和定时任务机制，可实现图片识别、结果存储、提醒调度、历史记录查询和后台数据管理等处理能力。",
+  "software_technical_option": "应用软件",
+  "software_category": "应用软件",
+  "manual_sections": [
+    {
+      "title": "软件概述与使用场景",
+      "intent": "先说明软件面向的植物养护场景、主要服务对象和整体用途，让审核员快速理解该软件解决的问题。",
+      "paragraphs": [],
+      "include_feature_overview": true,
+      "include_operation_modules": false,
+      "include_operation_flow": false
+    },
+    {
+      "title": "进入软件与首页识别入口",
+      "intent": "介绍用户进入系统后如何从首页进行植物识别、查看天气提示和进入后续功能模块。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "个人花园与日常养护管理",
+      "intent": "把植物档案、花园列表、快速养护记录和提醒管理放在一起说明，体现持续使用的主流程。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "植物百科查询与新手推荐",
+      "intent": "说明用户如何通过内容查询和场景化问答获得养护知识和植物选择建议。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    },
+    {
+      "title": "病害诊断、AI问诊与历史记录",
+      "intent": "说明病虫害识别结果、问诊对话和历史查看流程，突出问题处理闭环。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": true
+    },
+    {
+      "title": "养花日记、生长记录与配套服务",
+      "intent": "介绍日记记录、生长曲线、商品浏览和订单能力，完整覆盖项目的持续记录和服务延伸部分。",
+      "paragraphs": [],
+      "include_feature_overview": false,
+      "include_operation_modules": true,
+      "include_operation_flow": false
+    }
+  ],
+  "model_authored": true,
+  "external_research_notes": "",
+  "confirmation_required": true,
+  "user_confirmed": true,
+  "confirmation_stage": "business",
+  "next_action": "请确认 草稿/业务理解.md 中的软件用途、行业、目标用户、核心功能、手册结构和申请口径；确认后运行 confirm_stage.py --stage business。",
+  "review_notes": [
+    "请确认模型判断的行业领域、目标用户和主要功能是否符合实际申报口径。",
+    "请确认操作手册结构是否适合当前项目，而不是套用范本文档。"
+  ],
+  "confirmation_note": "用户已确认业务理解，继续生成申请表信息草稿",
+  "confirmed_at": "2026-05-16T15:59:28+00:00"
+}

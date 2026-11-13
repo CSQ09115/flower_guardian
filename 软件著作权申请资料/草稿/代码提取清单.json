@@ -1,0 +1,123 @@
+{
+  "software_name": "护花使者植物养护管理系统",
+  "version": "V1.0",
+  "project_root": "/Users/ember/Flower_Guardian",
+  "file_count": 11,
+  "material_line_count": 3872,
+  "source_line_count": 3850,
+  "selected_source_line_count": 3850,
+  "lines_per_page": 60,
+  "total_pages": 65,
+  "target_pages": 60,
+  "available_candidate_line_count": 6138810,
+  "available_candidate_pages": 102314,
+  "supplement_status": "候选源码可达到前30页/后30页要求",
+  "mode": "front30_back30",
+  "selection_file": "/Users/ember/Flower_Guardian/软件著作权申请资料/草稿/代码文件选择.json",
+  "outputs": [
+    "代码-前30页.md",
+    "代码-后30页.md"
+  ],
+  "files": [
+    {
+      "path": "weixin/src/pages/diagnosis/index.tsx",
+      "source_line_count": 525,
+      "selected_line_start": 1,
+      "selected_line_end": 525,
+      "selected_line_count": 525,
+      "material_line_start": 1,
+      "material_line_end": 527
+    },
+    {
+      "path": "weixin/src/pages/diary/index.tsx",
+      "source_line_count": 415,
+      "selected_line_start": 1,
+      "selected_line_end": 415,
+      "selected_line_count": 415,
+      "material_line_start": 528,
+      "material_line_end": 944
+    },
+    {
+      "path": "weixin/src/pages/encyclopedia/index.tsx",
+      "source_line_count": 434,
+      "selected_line_start": 1,
+      "selected_line_end": 434,
+      "selected_line_count": 434,
+      "material_line_start": 945,
+      "material_line_end": 1380
+    },
+    {
+      "path": "weixin/src/pages/garden/index.tsx",
+      "source_line_count": 494,
+      "selected_line_start": 1,
+      "selected_line_end": 494,
+      "selected_line_count": 494,
+      "material_line_start": 1381,
+      "material_line_end": 1876
+    },
+    {
+      "path": "weixin/src/pages/index/index.tsx",
+      "source_line_count": 636,
+      "selected_line_start": 1,
+      "selected_line_end": 636,
+      "selected_line_count": 636,
+      "material_line_start": 1877,
+      "material_line_end": 2514
+    },
+    {
+      "path": "weixin/src/pages/recommendation/index.tsx",
+      "source_line_count": 267,
+      "selected_line_start": 1,
+      "selected_line_end": 267,
+      "selected_line_count": 267,
+      "material_line_start": 2515,
+      "material_line_end": 2783
+    },
+    {
+      "path": "weixin/src/pages/reminder/index.tsx",
+      "source_line_count": 397,
+      "selected_line_start": 1,
+      "selected_line_end": 397,
+      "selected_line_count": 397,
+      "material_line_start": 2784,
+      "material_line_end": 3182
+    },
+    {
+      "path": "weixin/src/services/consultationService.ts",
+      "source_line_count": 263,
+      "selected_line_start": 1,
+      "selected_line_end": 263,
+      "selected_line_count": 263,
+      "material_line_start": 3183,
+      "material_line_end": 3447
+    },
+    {
+      "path": "weixin/src/services/plantService.ts",
+      "source_line_count": 204,
+      "selected_line_start": 1,
+      "selected_line_end": 204,
+      "selected_line_count": 204,
+      "material_line_start": 3448,
+      "material_line_end": 3653
+    },
+    {
+      "path": "weixin/src/services/recognitionService.ts",
+      "source_line_count": 100,
+      "selected_line_start": 1,
+      "selected_line_end": 100,
+      "selected_line_count": 100,
+      "material_line_start": 3654,
+      "material_line_end": 3755
+    },
+    {
+      "path": "weixin/src/services/request.ts",
+      "source_line_count": 115,
+      "selected_line_start": 1,
+      "selected_line_end": 115,
+      "selected_line_count": 115,
+      "material_line_start": 3756,
+      "material_line_end": 3872
+    }
+  ],
+  "safe_software_filename": "护花使者植物养护管理系统"
+}

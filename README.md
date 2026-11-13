@@ -27,6 +27,7 @@
 | 模型部署 | ONNX Runtime (服务器端 + 边缘端) |
 | AI大模型 | Qwen API |
 | 部署 | Docker Compose |
+| 硬件固件 | ESP32-S3 + PlatformIO (Arduino 框架) |
 
 ## 核心功能
 
@@ -87,6 +88,11 @@ Flower_Guardian/
 │   ├── Dockerfile
 │   └── requirements.txt
 ├── web/                    # Next.js 管理后台
+├── firmware/               # ESP32-S3 固件（详见 firmware/README.md）
+│   ├── src/main.cpp       # 主程序：WiFi 联网 + 传感器采集 + HTTP 上报
+│   ├── include/           # board_pins.h 引脚地图、wifi_config.h 本地配置
+│   ├── tools/             # 离线环境搭建脚本 + 串口调试工具
+│   └── docs/              # 离线开发环境搭建记录
 ├── APP/                   # React Native 移动端（详见 APP/README.md）
 │   ├── ios/              # iOS 配置
 │   ├── android/          # Android 配置
@@ -404,6 +410,47 @@ python backend/train/export_onnx.py --type all
 
 详细说明见：[CV 模型使用指南](docs/plans/2026-03-10-cv-model-usage-guide.md)
 
+## 硬件固件 (ESP32-S3)
+
+项目配套的 ESP32-S3-N16R8 硬件终端，负责采集花盆环境数据并通过 WiFi 上报。
+
+**核心能力**：
+- 连接 2.4GHz WiFi（带超时重连与断开原因码诊断）
+- NTP 网络校时（阿里云 NTP）
+- 采集土壤湿度（电容式 ADC，含 auto 标定与未接线自动回退模拟值）、土壤温度（模拟值，待接 DS18B20）、光照（BH1750）；SHT30 空气温湿度驱动已实现但尚未接入主循环
+- 每 10 秒 HTTP POST 上报一次，LED 闪烁节奏表示运行状态
+- 串口调试命令：scan / pins / adc / cal air / cal water / cal show / help
+
+**关键引脚**：
+
+| 器件 | 引脚 | 说明 |
+|------|------|------|
+| 板载 LED | GPIO48 | 状态指示 |
+| 光照 BH1750 | SDA=GPIO41 / SCL=GPIO42 | I2C 地址 0x23 或 0x5C，与 OLED/SHT30 共用总线 |
+| 空气温湿度 SHT30 | SDA=GPIO41 / SCL=GPIO42 | I2C 地址 0x44 或 0x45 |
+| 土壤湿度 | GPIO2 | 电容式模块 AOUT，必须用 ADC1（GPIO1~10） |
+| 麦克风 INMP441 | WS=4 / SCK=5 / SD=6 | I2S 音频输入（预留） |
+| 功放 MAX98357 | DIN=7 / BCLK=15 / LRC=16 | I2S 音频输出（预留） |
+
+**快速开始**：
+
+```bash
+cd firmware
+cp include/wifi_config.h.example include/wifi_config.h   # 填入 WiFi 与服务器地址
+pio run                                                   # 编译
+pio run -t upload --upload-port COM7                      # 烧录（走 CH343 那个 Type-C 口）
+pio device monitor                                        # 串口查看日志（115200）
+```
+
+> ⚠️ 当前固件上报的目标接口 `/api/devices/{DEVICE_CODE}/readings` 尚未在后端 `backend/app` 中实现，
+> 上报会失败（LED 急促闪三下）。详见 [firmware/README.md](firmware/README.md) 的「已知问题」。
+
+> ⚠️ 本款板子有**两个 Type-C 口**：只有标 "COM" 的那个（CH343 芯片）能烧录；插原生 USB 口会报
+> `Failed to connect to ESP32-S3: No serial data received`。
+
+完整说明见 [firmware/README.md](firmware/README.md)，
+国内网络无法访问 PlatformIO 下载服务器的离线搭建方案见 [firmware/docs/离线环境搭建.md](firmware/docs/离线环境搭建.md)。
+
 ## 配色方案
 
 - **主色调**: `#e94b52` (珊瑚红)
@@ -421,4 +468,4 @@ MIT License
 
 ---
 
-*文档最后更新：2026-04-02*
+*文档最后更新：2026-11-13*
