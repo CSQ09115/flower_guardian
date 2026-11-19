@@ -3,6 +3,7 @@
 # ===============================
 # Frontend (React Native)
 # ===============================
+软件著作权申请资料/*
 .npm-cache/*
 .taste-skill/*
 frontend/node_modules/
@@ -80,3 +81,7 @@ backend/dataset/processed/
 backend/dataset/augmented/
 backend/dataset/split/
 workspace-3719c470-b38f-45f6-a6a9-a3524b966a55 (1)/
+
+web/node_modules/
+web/legacy/
+web/dist/

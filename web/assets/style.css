@@ -1,19 +1,19 @@
 /* 护花使者 · 产品官网 v2
-   Direction: a calm, product-led greenhouse. Warm paper, deep leaf green,
-   coral as the only loud colour. Chinese system sans for display, serif for
-   the footer line. Icons: Reicon (MIT), compiled locally into assets/icons.js. */
+   Direction: a calm, product-led greenhouse. Clean white paper, deep leaf
+   green, coral as the only loud colour. Chinese system sans for display,
+   serif for the footer line. Icons: Reicon (MIT), compiled locally into assets/icons.js. */
 
 :root {
-  --bg: #f6f3ec;
-  --bg-2: #efeadf;
-  --surface: #fffdf8;
-  --surface-2: #fbf8f1;
+  --bg: #fafafa;
+  --bg-2: #f2f2f2;
+  --surface: #ffffff;
+  --surface-2: #f5f5f5;
   --ink: #14241b;
   --ink-2: #32443a;
   --muted: #5b6b60;
   --muted-2: #54655a;
-  --line: #e2ddcf;
-  --line-2: #d3ccba;
+  --line: #e6e6e6;
+  --line-2: #d8d8d8;
   --green: #1c4a36;
   --green-2: #2c6a4d;
   --green-soft: #e4eddf;
@@ -21,8 +21,8 @@
   --coral-cta: #cf3f46;
   --coral-deep: #b8323a;
   --coral-soft: #fbe7e5;
-  --sand: #efe2c9;
-  --sand-soft: #f7eeda;
+  --sand: #f2f2f2;
+  --sand-soft: #f2f2f2;
   --white: #fff;
 
   /* one light-green band, used by every green section */
@@ -224,7 +224,7 @@ input, select { font: inherit; color: inherit; }
   transition: background .25s, border-color .25s, box-shadow .25s;
 }
 .nav.is-scrolled {
-  background: rgba(246, 243, 236, .88);
+  background: rgba(250, 250, 250, .88);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   border-color: var(--line);
@@ -265,7 +265,7 @@ input, select { font: inherit; color: inherit; }
   padding: 5px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 253, 248, .6);
+  background: rgba(255, 255, 255, .6);
 }
 .nav__links a {
   padding: 7px 14px;
@@ -285,7 +285,7 @@ input, select { font: inherit; color: inherit; }
   height: 44px;
   border: 1px solid var(--line);
   border-radius: 50%;
-  background: rgba(255, 253, 248, .7);
+  background: rgba(255, 255, 255, .7);
 }
 .nav__toggle span {
   position: absolute;
@@ -336,7 +336,7 @@ input, select { font: inherit; color: inherit; }
   padding: 7px 14px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: rgba(255, 253, 248, .68);
+  background: rgba(255, 255, 255, .68);
   font-size: 12.5px;
   letter-spacing: .06em;
   color: var(--muted);
@@ -455,7 +455,7 @@ input, select { font: inherit; color: inherit; }
   height: 618px;
   padding: 14px 14px 0;
   border-radius: 38px;
-  background: #fbfaf5;
+  background: #ffffff;
   overflow: hidden;
 }
 
@@ -536,7 +536,7 @@ input, select { font: inherit; color: inherit; }
   align-items: center;
   gap: 10px;
   padding: 9px 4px;
-  border-bottom: 1px solid #eae6da;
+  border-bottom: 1px solid #e9e9e9;
 }
 .app-row__ico {
   display: grid;
@@ -548,7 +548,7 @@ input, select { font: inherit; color: inherit; }
   color: var(--green);
   flex: none;
 }
-.app-row__ico--sand { background: var(--sand-soft); color: #a46a1e; }
+.app-row__ico--sand { background: var(--sand-soft); color: var(--muted); }
 .app-row div { display: flex; flex: 1; flex-direction: column; min-width: 0; }
 .app-row strong { font-size: 11.5px; }
 .app-row small { font-size: 9.5px; color: var(--muted); }
@@ -584,8 +584,8 @@ input, select { font: inherit; color: inherit; }
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   padding: 9px 8px 14px;
-  border-top: 1px solid #eae6da;
-  background: rgba(255, 253, 248, .94);
+  border-top: 1px solid #e9e9e9;
+  background: rgba(255, 255, 255, .94);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
 }
@@ -610,7 +610,7 @@ input, select { font: inherit; color: inherit; }
   padding: 10px 14px;
   border: 1px solid var(--line);
   border-radius: 16px;
-  background: rgba(255, 253, 248, .96);
+  background: rgba(255, 255, 255, .96);
   box-shadow: 0 18px 40px -24px rgba(20, 36, 27, .45);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
@@ -661,7 +661,7 @@ input, select { font: inherit; color: inherit; }
 .hero__strip {
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
-  background: rgba(255, 253, 248, .5);
+  background: rgba(255, 255, 255, .5);
 }
 .hero__strip-in {
   display: flex;
@@ -809,7 +809,7 @@ input, select { font: inherit; color: inherit; }
   left: 20px;
   padding: 6px 10px;
   border-radius: 999px;
-  background: rgba(255, 253, 248, .92);
+  background: rgba(255, 255, 255, .92);
   font-size: 9.5px;
   letter-spacing: .08em;
   color: var(--ink);
@@ -841,7 +841,7 @@ input, select { font: inherit; color: inherit; }
     inset 0 -1px 0 rgba(28, 74, 54, .06);
 }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .care__body { background: rgba(255, 253, 248, .92); }
+  .care__body { background: rgba(255, 255, 255, .92); }
 }
 
 .care__head {
@@ -1257,7 +1257,7 @@ input, select { font: inherit; color: inherit; }
   color: var(--green);
 }
 .feature__ico--coral { background: var(--coral-soft); color: var(--coral); }
-.feature__ico--sand { background: var(--sand-soft); color: #a46a1e; }
+.feature__ico--sand { background: var(--sand-soft); color: var(--muted); }
 .feature__tag {
   font-size: 9.5px;
   letter-spacing: .12em;
@@ -1299,7 +1299,7 @@ input, select { font: inherit; color: inherit; }
   color: var(--green);
   flex: none;
 }
-.mini-remind__ico--sand { background: var(--sand-soft); color: #a46a1e; }
+.mini-remind__ico--sand { background: var(--sand-soft); color: var(--muted); }
 .mini-remind__ico--gray { background: var(--bg-2); color: var(--muted); }
 .mini-remind__row div { display: flex; flex: 1; flex-direction: column; }
 .mini-remind__row b { font-size: 11.5px; }
