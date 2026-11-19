@@ -125,6 +125,9 @@ docker-compose ps
 
 # 查看日志
 docker-compose logs -f
+
+#启动 postgresql
+docker-compose up -d postgres
 ```
 
 服务启动后：
