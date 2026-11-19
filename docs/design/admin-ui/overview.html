@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>总览 · 护花使者运营后台</title>
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="brand"><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 4c0 9-5.4 14-11 14-3 0-5-2-5-4.6C4 8.4 10.4 4 20 4Z"/><path d="M4 20c2.5-5 7-8.5 12-10"/></svg><div class="name">护花使者<span class="sub">运营后台</span></div></div>
+<div class="group-label">概览</div><a class="nav-item" href="overview.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>总览</a><div class="group-label">设备</div><a class="nav-item" href="devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M10 3v2M14 3v2M10 19v2M14 19v2M3 10h2M3 14h2M19 10h2M19 14h2"/></svg>设备与传感</a><div class="group-label">经营</div><a class="nav-item" href="orders.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 8.4 12 4 4 8.4v7.2L12 20l8-4.4V8.4Z"/><path d="M4 8.4 12 12.8l8-4.4M12 12.8V20"/></svg>订单</a><div class="group-label">用户与内容</div><a class="nav-item" href="users.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.4a3.2 3.2 0 0 1 0 6.2M17.5 14.9c2 .6 3.5 2.4 3.5 4.6"/></svg>用户</a><div class="group-label">系统</div><a class="nav-item" href="settings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2.8"/><path d="M12 3v2.4M12 18.6V21M4.2 7.5l2 1.2M17.8 15.3l2 1.2M4.2 16.5l2-1.2M17.8 8.7l2-1.2"/></svg>设置</a>
+<div class="foot"><span>环境：生产 · 华东</span><span>v1.0.0</span></div>
+</aside>
+<main class="canvas">
+<div class="title-row">
+  <div><h1>总览</h1><p class="sub">2026-11-15 周六 · 数据截至 13:55，每 60 秒刷新</p></div>
+  <div class="title-actions">
+    <div class="segmented" role="group" aria-label="时间范围"><button aria-pressed="true">今日</button><button aria-pressed="false">7 日</button><button aria-pressed="false">30 日</button></div>
+    <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 4v11M7.5 11 12 15.5 16.5 11M4.5 19.5h15"/></svg>导出</button>
+  </div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><p class="kpi-label">今日销售额</p><p class="kpi-value">3,180<small>元</small></p><p class="delta">较昨日 <span class="up">+12.4%</span></p></div>
+  <div class="kpi"><p class="kpi-label">今日订单</p><p class="kpi-value">24<small>单</small></p><p class="delta">较昨日 <span class="up">+3</span> · 客单价 132.5 元</p></div>
+  <div class="kpi"><p class="kpi-label">在线设备</p><p class="kpi-value">18<small>/ 24</small></p><p class="delta"><span class="down">3 台离线</span> · 3 台告警</p></div>
+  <div class="kpi"><p class="kpi-label">待处理告警</p><p class="kpi-value">5<small>条</small></p><p class="delta">其中 2 条高危，平均已持续 46 分钟</p></div>
+</div>
+
+<div class="grid top">
+  <section class="panel span-8">
+    <header><h2>销售额趋势</h2><span class="meta">近 7 日 · 单位元</span></header>
+    <div class="chart" id="c-sales" style="height:296px"></div>
+  </section>
+  <section class="panel span-4">
+    <header><h2>待办</h2><span class="meta">5 项</span></header>
+    <div class="rows">
+      <a class="row" href="devices.html"><div class="grow"><span class="name">FG-ESP32-004 离线 2 小时</span><span class="sub">B 栋 3 层 · 最后一次上报 11:52</span></div><span class="pill neg">高危</span></a>
+      <a class="row" href="device.html"><div class="grow"><span class="name">土壤湿度连续 6 小时低于 25%</span><span class="sub">FG-ESP32-001 · 建议校准或更换探头</span></div><span class="pill warn">待确认</span></a>
+      <a class="row" href="orders.html"><div class="grow"><span class="name">3 笔订单超过 24 小时未发货</span><span class="sub">最早一单 #202611140087</span></div><span class="pill warn">待处理</span></a>
+      <div class="row"><div class="grow"><span class="name">2 个商品库存低于 10</span><span class="sub">陶粒土 3L · 缓释肥颗粒</span></div><span class="pill">补货</span></div>
+      <div class="row"><div class="grow"><span class="name">植物库 3 条记录缺少养护要点</span><span class="sub">影响小程序详情页展示</span></div><span class="pill">内容</span></div>
+    </div>
+  </section>
+</div>
+
+<div class="grid top" style="margin-top:24px">
+  <section class="panel span-8">
+    <header><h2>最近订单</h2><a class="meta" href="orders.html">查看全部</a></header>
+    <div class="table-wrap"><table>
+      <thead><tr><th>订单号</th><th>用户</th><th class="n">金额</th><th>配送</th><th>状态</th><th>时间</th></tr></thead>
+      <tbody>
+        <tr><td class="id">#202611150024</td><td>林小满</td><td class="n">￥168.00</td><td>快递</td><td><span class="pill">待确认</span></td><td class="muted">13:42</td></tr>
+        <tr><td class="id">#202611150023</td><td>周洋</td><td class="n">￥89.90</td><td>自提</td><td><span class="pill acc">已确认</span></td><td class="muted">13:18</td></tr>
+        <tr><td class="id">#202611150022</td><td>陈雨桐</td><td class="n">￥432.00</td><td>快递</td><td><span class="pill pos">已发货</span></td><td class="muted">12:55</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+  <section class="panel span-4">
+    <header><h2>设备在线率</h2><span class="meta">近 7 日</span></header>
+    <div class="chart" id="c-online" style="height:96px"></div>
+    <div class="rows" style="margin-top:10px">
+      <div class="row"><div class="grow"><span class="name">A 栋</span><span class="sub">展厅与育苗区</span></div><span class="value">12 / 12</span></div>
+      <div class="row"><div class="grow"><span class="name">B 栋</span><span class="sub">后场与仓储</span></div><span class="value">6 / 9</span></div>
+    </div>
+  </section>
+</div>
+</main>
+</div>
+<script src="assets/charts.js"></script>
+<script>
+Charts.line(document.getElementById('c-sales'), {
+  values: [2680, 3120, 2450, 3980, 3410, 2890, 3180],
+  labels: ['11-09', '11-10', '11-11', '11-12', '11-13', '11-14', '11-15'],
+  max: 4000, ticks: 5, height: 296, filled: true,
+  format: function (v) { return Math.round(v); }
+});
+Charts.bars(document.getElementById('c-online'), {
+  values: [0.92, 0.96, 0.88, 1, 0.95, 0.79, 0.75],
+  labels: ['09', '10', '11', '12', '13', '14', '15'], /* taste-skill-ignore: 小时刻度，非装饰序号 */
+  max: 1, ticks: 3, height: 96, barWidth: 20,
+  format: function (v) { return Math.round(v * 100) + '%'; }
+});
+</script>
+</body>
+</html>

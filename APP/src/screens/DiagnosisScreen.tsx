@@ -1,5 +1,6 @@
 // 病症诊断页面 - 现代简洁移动端设计
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useReducedMotion, getApiErrorMessage } from '../utils/resilience';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text, Alert, Animated, Easing, Image, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,6 +29,9 @@ export function DiagnosisScreen({ onGoBack, onNavigate, isLoggedIn, onRequireLog
   const [detectionTags, setDetectionTags] = useState<DetectionTag[]>([]);
   const [pulseAnim] = useState(new Animated.Value(1));
   const [recognitionMode, setRecognitionMode] = useState<'online' | 'offline'>('online');
+  const reducedMotion = useReducedMotion();
+  const loopRef = useRef<{ stop: () => void } | null>(null);
+  const busyRef = useRef(false);
 
   useEffect(() => {
     networkMonitor.initialize();
@@ -40,9 +44,12 @@ export function DiagnosisScreen({ onGoBack, onNavigate, isLoggedIn, onRequireLog
     };
   }, []);
 
-  React.useEffect(() => {
-    if (isLoading) {
-      Animated.loop(
+  useEffect(() => {
+    loopRef.current?.stop();
+    loopRef.current = null;
+    pulseAnim.setValue(1);
+    if (isLoading && !reducedMotion) {
+      const loop = Animated.loop(
         Animated.sequence([
           Animated.timing(pulseAnim, {
             toValue: 1.05,
@@ -57,11 +64,15 @@ export function DiagnosisScreen({ onGoBack, onNavigate, isLoggedIn, onRequireLog
             useNativeDriver: true,
           }),
         ])
-      ).start();
-    } else {
-      pulseAnim.setValue(1);
+      );
+      loopRef.current = loop;
+      loop.start();
     }
-  }, [isLoading, pulseAnim]);
+    return () => {
+      loopRef.current?.stop();
+      loopRef.current = null;
+    };
+  }, [isLoading, pulseAnim, reducedMotion]);
 
   const handleGoBack = () => {
     setDiagnosisResult(null);
@@ -93,6 +104,8 @@ export function DiagnosisScreen({ onGoBack, onNavigate, isLoggedIn, onRequireLog
   };
 
   const proceedWithDiagnosis = async (source: 'camera' | 'gallery') => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     try {
       setIsLoading(true);
       setDiagnosisResult(null);
@@ -224,9 +237,10 @@ export function DiagnosisScreen({ onGoBack, onNavigate, isLoggedIn, onRequireLog
       const isConnected = await isNetworkConnected();
       setRecognitionMode(isConnected ? 'online' : 'offline');
     } catch (error) {
-      Alert.alert('识别失败', '请重试');
+      Alert.alert('识别失败', getApiErrorMessage(error, '请重试'));
       console.error('Recognition error:', error);
     } finally {
+      busyRef.current = false;
       setIsLoading(false);
     }
   };

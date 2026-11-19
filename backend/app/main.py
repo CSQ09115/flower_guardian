@@ -15,7 +15,7 @@ logging.basicConfig(
 )
 
 # 导入所有模型以确保表被创建
-from app.models import User, Plant, UserPlant, Reminder, Diary, Product, Order, OrderItem, CartItem, Payment, DiagnosisRecord, Address, EmailVerification
+from app.models import User, Plant, UserPlant, Reminder, Diary, Product, Order, OrderItem, CartItem, Payment, DiagnosisRecord, Address, EmailVerification, Device, DeviceReading, DeviceAlert
 
 # 定时任务调度器
 scheduler = None

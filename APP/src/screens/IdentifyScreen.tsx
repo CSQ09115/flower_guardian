@@ -1,5 +1,6 @@
 // 识别（首页）屏幕 - 美化版
 import React, { useState, useRef, useEffect } from 'react';
+import { useReducedMotion, getApiErrorMessage } from '../utils/resilience';
 import {
   View,
   StyleSheet,
@@ -230,49 +231,47 @@ export function IdentifyScreen({ onNavigate, currentTab, onTabChange }: Identify
   const floatAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
+  const reducedMotion = useReducedMotion();
+  const busyRef = useRef(false);
+
   useEffect(() => {
-    // 脉动动画
-    Animated.loop(
+    if (reducedMotion) {
+      pulseAnim.setValue(1);
+      floatAnim.setValue(0);
+      slideAnim.setValue(0);
+      return;
+    }
+    const pulseLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
+        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1500, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1, duration: 1500, useNativeDriver: true }),
       ])
-    ).start();
-
-    // 浮动动画
-    Animated.loop(
+    );
+    const floatLoop = Animated.loop(
       Animated.sequence([
-        Animated.timing(floatAnim, {
-          toValue: 1,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnim, {
-          toValue: 0,
-          duration: 3000,
-          useNativeDriver: true,
-        }),
+        Animated.timing(floatAnim, { toValue: 1, duration: 3000, useNativeDriver: true }),
+        Animated.timing(floatAnim, { toValue: 0, duration: 3000, useNativeDriver: true }),
       ])
-    ).start();
-
-    // 进场动画
-    Animated.spring(slideAnim, {
+    );
+    const spring = Animated.spring(slideAnim, {
       toValue: 0,
       tension: 50,
       friction: 8,
       useNativeDriver: true,
-    }).start();
-  }, []);
+    });
+    pulseLoop.start();
+    floatLoop.start();
+    spring.start();
+    return () => {
+      pulseLoop.stop();
+      floatLoop.stop();
+      spring.stop();
+    };
+  }, [reducedMotion, pulseAnim, floatAnim, slideAnim]);
 
   const handleIdentify = async (source: 'camera' | 'gallery') => {
+    if (busyRef.current) return;
+    busyRef.current = true;
     try {
       setIsLoading(true);
       const response = source === 'camera'
@@ -367,17 +366,18 @@ export function IdentifyScreen({ onNavigate, currentTab, onTabChange }: Identify
         setRecognitionResult(result);
         setShowPlantCard(true);
       } catch (apiError) {
-        // API调用失败，使用模拟数据作为降级
-        console.warn('API调用失败，使用模拟数据', apiError);
+        // 识别接口异常时不再伪造识别结果，明确告知失败并允许重试
+        console.warn('识别接口调用失败', apiError);
         setDetectionBboxes([]);
         setDetectionTags([]);
-        const fallbackResult = getMockRecognitionResult();
-        setRecognitionResult(fallbackResult);
-        setShowPlantCard(true);
+        setRecognitionResult(null);
+        setShowPlantCard(false);
+        Alert.alert('识别失败', getApiErrorMessage(apiError, '无法完成识别，请稍后重试'));
       }
     } catch (error) {
-      Alert.alert('识别失败', '请重试或检查网络连接');
+      Alert.alert('识别失败', getApiErrorMessage(error, '请重试或检查网络连接'));
     } finally {
+      busyRef.current = false;
       setIsLoading(false);
     }
   };
@@ -1572,18 +1572,4 @@ const styles = StyleSheet.create({
   lastSection: {
     marginBottom: spacing.xxl * 2.5,
   },
-});
-
-// 降级用的模拟数据
-const getMockRecognitionResult = (): RecognitionResult => ({
-  id: '1',
-  name: '绿萝',
-  scientificName: 'Epipremnum aureum',
-  confidence: 0.95,
-  description: '绿萝是天南星科麒麟叶属植物，原产于印度尼西亚的热带雨林。',
-  careLevel: 1,
-  lightRequirement: '耐阴',
-  waterRequirement: '见干见湿',
-  imageUrl: '',
-  similarSpecies: [],
 });

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>设置 · 护花使者运营后台</title>
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="brand"><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 4c0 9-5.4 14-11 14-3 0-5-2-5-4.6C4 8.4 10.4 4 20 4Z"/><path d="M4 20c2.5-5 7-8.5 12-10"/></svg><div class="name">护花使者<span class="sub">运营后台</span></div></div>
+<div class="group-label">概览</div><a class="nav-item" href="overview.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>总览</a><div class="group-label">设备</div><a class="nav-item" href="devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M10 3v2M14 3v2M10 19v2M14 19v2M3 10h2M3 14h2M19 10h2M19 14h2"/></svg>设备与传感</a><div class="group-label">经营</div><a class="nav-item" href="orders.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 8.4 12 4 4 8.4v7.2L12 20l8-4.4V8.4Z"/><path d="M4 8.4 12 12.8l8-4.4M12 12.8V20"/></svg>订单</a><div class="group-label">用户与内容</div><a class="nav-item" href="users.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.4a3.2 3.2 0 0 1 0 6.2M17.5 14.9c2 .6 3.5 2.4 3.5 4.6"/></svg>用户</a><div class="group-label">系统</div><a class="nav-item" href="settings.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2.8"/><path d="M12 3v2.4M12 18.6V21M4.2 7.5l2 1.2M17.8 15.3l2 1.2M4.2 16.5l2-1.2M17.8 8.7l2-1.2"/></svg>设置</a>
+<div class="foot"><span>环境：生产 · 华东</span><span>v1.0.0</span></div>
+</aside>
+<main class="canvas">
+<div class="settings">
+  <div class="title-row"><div><h1>设置</h1><p class="sub">改动即时生效并记录审计日志，可回溯到具体操作人</p></div></div>
+
+  <section class="section">
+    <div><h2>设备上报</h2><p class="desc">决定后台如何判定设备在线、如何保留原始数据。修改后对下一轮上报立即生效。</p></div>
+    <div class="well">
+      <div class="field-row">
+        <div class="field"><label for="a1">在线判定阈值</label><input class="input" id="a1" value="30" inputmode="numeric"><span class="hint">超过该秒数无上报显示为「离线」</span></div>
+        <div class="field"><label for="a2">离线告警阈值</label><input class="input" id="a2" value="120" inputmode="numeric"><span class="hint">超过该秒数通知硬件负责人</span></div>
+      </div>
+      <div class="field"><label for="a3">原始读数保留</label>
+        <select class="input" id="a3"><option>7 天</option><option>30 天</option><option>90 天</option></select>
+        <span class="hint">超过保留期的小时聚合仍会保留 180 天</span>
+      </div>
+      <div class="inline"><input class="switch" type="checkbox" id="a4" checked><label for="a4">离线设备自动重发最后一次未确认命令</label></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div><h2>告警通知</h2><p class="desc">设备异常与业务异常合并到同一收件地址，避免多渠道重复打扰。</p></div>
+    <div class="well">
+      <div class="field"><label for="b1">收件邮箱</label><input class="input" id="b1" value="hardware@huahuashizhe.cn" type="email"><span class="hint">多人用半角逗号分隔</span></div>
+      <div class="field-row">
+        <div class="field"><label for="b2">土壤湿度下限</label><input class="input" id="b2" value="25" inputmode="numeric"><span class="hint">低于该值持续 6 小时触发</span></div>
+        <div class="field"><label for="b3">防重复间隔</label><input class="input" id="b3" value="60" inputmode="numeric"><span class="hint">同一设备同期只发一次，单位分钟</span></div>
+      </div>
+      <div class="inline"><input class="switch" type="checkbox" id="b4" checked><label for="b4">订单超过 24 小时未发货时提醒运营</label></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div><h2>账号与权限</h2><p class="desc">管理员角色需在数据库中将 users.role 置为 admin，界面仅展示与撤销。</p></div>
+    <div class="well">
+      <div class="rows">
+        <div class="row"><div class="grow"><span class="name">ops@huahuashizhe.cn</span><span class="sub">运营 · 今天 13:55 登录</span></div><span class="pill acc">管理员</span></div>
+        <div class="row"><div class="grow"><span class="name">hw@huahuashizhe.cn</span><span class="sub">硬件 · 近 30 天未登录</span></div><span class="pill acc">管理员</span></div>
+        <div class="row"><div class="grow"><span class="name">support@huahuashizhe.cn</span><span class="sub">客服 · 只读订单与用户</span></div><span class="pill">只读</span></div>
+      </div>
+      <button class="btn" style="justify-self:start">邀请管理员</button>
+    </div>
+  </section>
+
+  <section class="section">
+    <div><h2>危险操作</h2><p class="desc">这些操作不可撤销，执行前会再次确认并要求输入操作原因。</p></div>
+    <div class="danger-zone">
+      <div class="row"><div class="grow"><span class="name">清空设备原始读数</span><span class="sub">保留小时聚合，仅删除 7 天内的逐条记录</span></div><button class="btn danger">清空</button></div>
+      <div class="row"><div class="grow"><span class="name">重置设备密钥</span><span class="sub">已登记设备需重新烧录 DEVICE_CODE 对应的上报凭证</span></div><button class="btn danger">重置</button></div>
+    </div>
+  </section>
+</div>
+</main>
+</div>
+
+</body>
+</html>

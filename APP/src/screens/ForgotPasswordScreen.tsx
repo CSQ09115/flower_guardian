@@ -1,11 +1,12 @@
 // 忘记密码页面
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TextInput, TouchableOpacity, Text, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icons } from '../components/Icon';
 import { colors, spacing } from '../constants/theme';
 import axios from 'axios';
 import { API_BASE_URL } from '../services/config';
+import { useCountdown, getApiErrorMessage, safeText } from '../utils/resilience';
 
 interface ForgotPasswordScreenProps {
   onGoBack: () => void;
@@ -20,10 +21,13 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const { remaining: countdown, start: startCountdown } = useCountdown();
+  const sendRef = useRef(false);
+  const resetRef = useRef(false);
 
   // 发送验证码
   const handleSendCode = async () => {
+    if (sendRef.current) return;
     if (!email.trim()) {
       Alert.alert('提示', '请输入邮箱地址');
       return;
@@ -33,28 +37,20 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
       return;
     }
 
+    sendRef.current = true;
     setLoading(true);
     try {
       await axios.post(`${API_BASE_URL}/api/users/forgot-password`, {
-        email: email.trim(),
+        email: safeText(email, 254),
         purpose: 'password_reset',
       });
       setStep(2);
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      startCountdown(60);
       Alert.alert('发送成功', '验证码已发送到您的邮箱');
     } catch (error: any) {
-      const message = error.response?.data?.detail || '发送失败，请稍后重试';
-      Alert.alert('发送失败', message);
+      Alert.alert('发送失败', getApiErrorMessage(error, '发送失败，请稍后重试'));
     } finally {
+      sendRef.current = false;
       setLoading(false);
     }
   };
@@ -78,20 +74,22 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
       return;
     }
 
+    if (resetRef.current) return;
+    resetRef.current = true;
     setLoading(true);
     try {
       await axios.post(`${API_BASE_URL}/api/users/reset-password`, {
-        email: email.trim(),
-        code: code.trim(),
+        email: safeText(email, 254),
+        code: safeText(code, 6),
         new_password: newPassword,
       });
       Alert.alert('重置成功', '密码已重置，请使用新密码登录', [
         { text: '确定', onPress: onResetSuccess },
       ]);
     } catch (error: any) {
-      const message = error.response?.data?.detail || '重置失败，请检查验证码是否正确';
-      Alert.alert('重置失败', message);
+      Alert.alert('重置失败', getApiErrorMessage(error, '重置失败，请检查验证码是否正确'));
     } finally {
+      resetRef.current = false;
       setLoading(false);
     }
   };
@@ -104,7 +102,9 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
       >
         {/* 头部 */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
+          <TouchableOpacity onPress={onGoBack} style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="返回">
             <Icons.ChevronLeft size={22} color={colors.primary} />
           </TouchableOpacity>
         </View>
@@ -141,6 +141,8 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
                       keyboardType="email-address"
                       autoCapitalize="none"
                       autoCorrect={false}
+                      maxLength={254}
+                      accessibilityLabel="邮箱地址"
                     />
                   </View>
 
@@ -149,6 +151,8 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
                     disabled={loading}
                     style={[styles.submitButton, loading && styles.submitButtonDisabled]}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: loading, busy: loading }}
                   >
                     <Text style={styles.submitButtonText}>
                       {loading ? '发送中...' : '发送验证码'}
@@ -170,11 +174,15 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
                       onChangeText={setCode}
                       keyboardType="number-pad"
                       maxLength={6}
+                      accessibilityLabel="6位验证码"
                     />
                     <TouchableOpacity
                       onPress={handleSendCode}
                       disabled={countdown > 0}
                       style={styles.resendButton}
+                      accessibilityRole="button"
+                      accessibilityLabel={countdown > 0 ? `${countdown}秒后可重新发送` : '重新发送验证码'}
+                      accessibilityState={{ disabled: countdown > 0 }}
                     >
                       <Text style={[styles.resendText, countdown > 0 && styles.resendTextDisabled]}>
                         {countdown > 0 ? `${countdown}s` : '重新发送'}
@@ -194,10 +202,15 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
                       onChangeText={setNewPassword}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
+                      maxLength={128}
+                      accessibilityLabel="新密码"
                     />
                     <TouchableOpacity
                       onPress={() => setShowPassword(!showPassword)}
                       style={styles.eyeButton}
+                      accessibilityRole="button"
+                      accessibilityLabel={showPassword ? '隐藏密码' : '显示密码'}
+                      accessibilityState={{ selected: showPassword }}
                     >
                       {showPassword ? (
                         <Icons.EyeOff size={20} color={colors['text-tertiary']} />
@@ -219,6 +232,8 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
                       onChangeText={setConfirmPassword}
                       secureTextEntry={!showPassword}
                       autoCapitalize="none"
+                      maxLength={128}
+                      accessibilityLabel="确认新密码"
                     />
                   </View>
 
@@ -227,13 +242,17 @@ export function ForgotPasswordScreen({ onGoBack, onResetSuccess }: ForgotPasswor
                     disabled={loading}
                     style={[styles.submitButton, loading && styles.submitButtonDisabled]}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: loading, busy: loading }}
                   >
                     <Text style={styles.submitButtonText}>
                       {loading ? '重置中...' : '重置密码'}
                     </Text>
                   </TouchableOpacity>
 
-                  <TouchableOpacity onPress={() => setStep(1)} style={styles.backStepButton}>
+                  <TouchableOpacity onPress={() => setStep(1)} style={styles.backStepButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="返回上一步">
                     <Text style={styles.backStepText}>返回上一步</Text>
                   </TouchableOpacity>
                 </>

@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>订单 · 护花使者运营后台</title>
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="brand"><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 4c0 9-5.4 14-11 14-3 0-5-2-5-4.6C4 8.4 10.4 4 20 4Z"/><path d="M4 20c2.5-5 7-8.5 12-10"/></svg><div class="name">护花使者<span class="sub">运营后台</span></div></div>
+<div class="group-label">概览</div><a class="nav-item" href="overview.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>总览</a><div class="group-label">设备</div><a class="nav-item" href="devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M10 3v2M14 3v2M10 19v2M14 19v2M3 10h2M3 14h2M19 10h2M19 14h2"/></svg>设备与传感</a><div class="group-label">经营</div><a class="nav-item" href="orders.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 8.4 12 4 4 8.4v7.2L12 20l8-4.4V8.4Z"/><path d="M4 8.4 12 12.8l8-4.4M12 12.8V20"/></svg>订单</a><div class="group-label">用户与内容</div><a class="nav-item" href="users.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.4a3.2 3.2 0 0 1 0 6.2M17.5 14.9c2 .6 3.5 2.4 3.5 4.6"/></svg>用户</a><div class="group-label">系统</div><a class="nav-item" href="settings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2.8"/><path d="M12 3v2.4M12 18.6V21M4.2 7.5l2 1.2M17.8 15.3l2 1.2M4.2 16.5l2-1.2M17.8 8.7l2-1.2"/></svg>设置</a>
+<div class="foot"><span>环境：生产 · 华东</span><span>v1.0.0</span></div>
+</aside>
+<main class="canvas">
+<div class="title-row">
+  <div><h1>订单</h1><p class="sub">今日 24 单 · 其中 3 单超过 24 小时未发货，需要优先处理</p></div>
+  <div class="title-actions"><div class="segmented" role="group" aria-label="时间范围"><button aria-pressed="true">今日</button><button aria-pressed="false">7 日</button><button aria-pressed="false">30 日</button></div><button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 4v11M7.5 11 12 15.5 16.5 11M4.5 19.5h15"/></svg>导出</button></div>
+</div>
+
+<div class="tabs" role="tablist">
+  <a href="#" role="tab" aria-selected="true">全部<span class="count">24</span></a>
+  <a href="#" role="tab" aria-selected="false">待确认<span class="count">5</span></a>
+  <a href="#" role="tab" aria-selected="false">待发货<span class="count">7</span></a>
+  <a href="#" role="tab" aria-selected="false">已发货<span class="count">4</span></a>
+  <a href="#" role="tab" aria-selected="false">已完成<span class="count">8</span></a>
+</div>
+
+<div class="filters">
+  <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4.5 4.5"/></svg><input class="input" type="search" placeholder="搜索订单号、联系人或手机号"></label>
+  <select class="input"><option>全部配送方式</option><option>快递</option><option>自提</option></select>
+  <span class="spacer"></span>
+  <span class="stamp">共 24 单 · 合计 3,180.00 元</span>
+</div>
+
+<div class="panel">
+  <div class="table-wrap"><table>
+    <thead><tr><th>订单号</th><th>用户</th><th>商品</th><th class="n">金额</th><th>配送</th><th>状态</th><th>下单时间</th><th class="n">操作</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="mono">#202611150024</span></td>
+        <td>林小满<span class="sub">138****6721</span></td>
+        <td><span class="truncate">陶粒土 3L 等 2 件</span></td>
+        <td class="n">￥168.00</td><td>快递</td>
+        <td><span class="pill">待确认</span></td>
+        <td class="muted">13:42</td>
+        <td class="n"><button class="btn quiet">确认</button></td>
+      </tr>
+      <tr>
+        <td><span class="mono">#202611150023</span></td>
+        <td>周洋<span class="sub">139****1102</span></td>
+        <td><span class="truncate">缓释肥颗粒 500g</span></td>
+        <td class="n">￥89.90</td><td>自提</td>
+        <td><span class="pill acc">已确认</span></td>
+        <td class="muted">13:18</td>
+        <td class="n"><button class="btn quiet">发货</button></td>
+      </tr>
+      <tr>
+        <td><span class="mono">#202611150022</span></td>
+        <td>陈雨桐<span class="sub">135****8890</span></td>
+        <td><span class="truncate">龟背竹 45cm 等 3 件</span></td>
+        <td class="n">￥432.00</td><td>快递</td>
+        <td><span class="pill pos">已发货</span></td>
+        <td class="muted">12:55</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+      <tr>
+        <td><span class="mono">#202611150021</span></td>
+        <td>何以安<span class="sub">137****4433</span></td>
+        <td><span class="truncate">多肉拼盘小盆</span></td>
+        <td class="n">￥56.00</td><td>快递</td>
+        <td><span class="pill pos">已完成</span></td>
+        <td class="muted">12:31</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+      <tr>
+        <td><span class="mono">#202611140087</span></td>
+        <td>苏晚<span class="sub">186****2019</span></td>
+        <td><span class="truncate">喷壶 1L</span></td>
+        <td class="n">￥39.00</td><td>快递</td>
+        <td><span class="pill warn">已确认 · 超 26 小时</span></td>
+        <td class="muted">11-14 11:40</td>
+        <td class="n"><button class="btn quiet">发货</button></td>
+      </tr>
+      <tr>
+        <td><span class="mono">#202611150020</span></td>
+        <td>郑柏<span class="sub">133****5520</span></td>
+        <td><span class="truncate">花盆托盘 20cm 等 4 件</span></td>
+        <td class="n">￥124.00</td><td>快递</td>
+        <td><span class="pill">待确认</span></td>
+        <td class="muted">11:58</td>
+        <td class="n"><button class="btn quiet">确认</button></td>
+      </tr>
+      <tr>
+        <td><span class="mono">#202611150019</span></td>
+        <td>吴清<span class="sub">188****3307</span></td>
+        <td><span class="truncate">绿萝 30cm</span></td>
+        <td class="n">￥68.00</td><td>自提</td>
+        <td><span class="pill acc">已确认</span></td>
+        <td class="muted">11:24</td>
+        <td class="n"><button class="btn quiet">发货</button></td>
+      </tr>
+      <tr>
+        <td><span class="mono">#202611150018</span></td>
+        <td>许南<span class="sub">159****6684</span></td>
+        <td><span class="truncate">土壤湿度传感器探头</span></td>
+        <td class="n">￥199.00</td><td>快递</td>
+        <td><span class="pill pos">已发货</span></td>
+        <td class="muted">10:47</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+      <tr>
+        <td><span class="mono">#202611140086</span></td>
+        <td>李默<span class="sub">150****7781</span></td>
+        <td><span class="truncate">营养液 250ml 等 2 件</span></td>
+        <td class="n">￥76.00</td><td>自提</td>
+        <td><span class="pill neg">已取消</span></td>
+        <td class="muted">11-14 10:22</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+</main>
+</div>
+
+</body>
+</html>

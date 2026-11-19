@@ -1,5 +1,5 @@
 // 花园屏幕 - 连接后端 API
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -16,6 +16,7 @@ import { Icons } from '../components/Icon';
 import { colors, spacing } from '../constants/theme';
 import { NavigationProps } from '../navigation/AppNavigator';
 import { UserPlant, getMyPlants, addToMyGarden, deleteMyPlant, updateUserPlant, GardenStats, CalendarData, getGardenStats, getCareCalendar, getCareRecords, addCareRecord, CareRecord } from '../services/plantService';
+import { getApiErrorMessage, safeDaysSince, safeFormatDate, safeText } from '../utils/resilience';
 
 interface GardenScreenProps extends Partial<NavigationProps> {}
 
@@ -41,6 +42,10 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
   const [newPlantLocation, setNewPlantLocation] = useState('other');
   const [stats, setStats] = useState<GardenStats | null>(null);
   const [calendarData, setCalendarData] = useState<CalendarData | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const busyRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const setBusy = (value: boolean) => { busyRef.current = value; setIsSubmitting(value); };
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -85,8 +90,10 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
         }
       }));
       setPlantCareRecords(records);
+      setLoadError(null);
     } catch (error: any) {
       console.error('[Garden] Failed to load plants:', error?.response?.data || error?.message || error);
+      setLoadError(getApiErrorMessage(error, '无法加载花园，请检查网络后重试'));
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -115,6 +122,8 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
       Alert.alert('提示', '请先登录');
       return;
     }
+    if (busyRef.current) return;
+    setBusy(true);
     try {
       await addCareRecord(plantId, { care_type: 'watering', notes: '快速浇水' });
 
@@ -127,7 +136,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
 
       Alert.alert('浇水成功', '已记录浇水时间');
     } catch (error) {
-      Alert.alert('浇水成功', '已记录浇水时间');
+      Alert.alert('浇水失败', getApiErrorMessage(error, '未能记录浇水，请稍后重试'));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -142,7 +153,7 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
             await deleteMyPlant(plantId);
             setPlants(plants.filter(p => p.id !== plantId));
           } catch (error) {
-            Alert.alert('失败', '无法删除植物');
+            Alert.alert('失败', getApiErrorMessage(error, '无法删除植物'));
           }
         },
       },
@@ -158,22 +169,24 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
   };
 
   const handleSaveEdit = async () => {
+    if (busyRef.current) return;
     if (!editingPlant || !newPlantName.trim()) {
       Alert.alert('请输入植物名称');
       return;
     }
+    setBusy(true);
     try {
       await updateUserPlant(editingPlant.id, {
-        plant_name: newPlantName,
-        nickname: newPlantNickname || newPlantName,
+        plant_name: safeText(newPlantName, 60),
+        nickname: safeText(newPlantNickname, 60) || safeText(newPlantName, 60),
         location: newPlantLocation,
       });
       setPlants(plants.map(p => {
         if (p.id === editingPlant.id) {
           return {
             ...p,
-            plant_name: newPlantName,
-            nickname: newPlantNickname || newPlantName,
+            plant_name: safeText(newPlantName, 60),
+            nickname: safeText(newPlantNickname, 60) || safeText(newPlantName, 60),
             location: newPlantLocation,
           };
         }
@@ -185,11 +198,14 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
       setNewPlantNickname('');
       setNewPlantLocation('other');
     } catch (error) {
-      Alert.alert('失败', '无法更新植物信息');
+      Alert.alert('失败', getApiErrorMessage(error, '无法更新植物信息'));
+    } finally {
+      setBusy(false);
     }
   };
 
   const handleAddPlant = async () => {
+    if (busyRef.current) return;
     if (!isLoggedIn) {
       if (onRequireLogin) {
         onRequireLogin();
@@ -200,10 +216,11 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
       Alert.alert('请输入植物名称');
       return;
     }
+    setBusy(true);
     try {
       const newPlant = await addToMyGarden({
-        plant_name: newPlantName,
-        nickname: newPlantNickname || newPlantName,
+        plant_name: safeText(newPlantName, 60),
+        nickname: safeText(newPlantNickname, 60) || safeText(newPlantName, 60),
         location: newPlantLocation,
       });
       setPlants([...plants, newPlant]);
@@ -212,7 +229,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
       setNewPlantNickname('');
       setNewPlantLocation('other');
     } catch (error) {
-      Alert.alert('失败', '无法添加植物');
+      Alert.alert('失败', getApiErrorMessage(error, '无法添加植物'));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -246,7 +265,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
               <Icons.Flower2 size={24} color="#fff" />
               <Text style={styles.headerTitleText}>我的花园</Text>
             </View>
-            <TouchableOpacity onPress={handleAddPlantPress} style={styles.addButton}>
+            <TouchableOpacity onPress={handleAddPlantPress} style={styles.addButton}
+              accessibilityRole="button"
+              accessibilityLabel="添加植物">
               <Icons.Plus size={16} color={colors.primary} />
               <Text style={styles.addButtonText}>添加植物</Text>
             </TouchableOpacity>
@@ -331,7 +352,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
             </View>
             <Text style={styles.emptyTitle}>登录后使用</Text>
             <Text style={styles.emptySubtitle}>登录后可管理你的花园</Text>
-            <TouchableOpacity onPress={() => onRequireLogin && onRequireLogin()} style={styles.emptyAddButton}>
+            <TouchableOpacity onPress={() => onRequireLogin && onRequireLogin()} style={styles.emptyAddButton}
+              accessibilityRole="button"
+              accessibilityLabel="立即登录">
               <Icons.User size={18} color="#fff" />
               <Text style={styles.emptyAddButtonText}>立即登录</Text>
             </TouchableOpacity>
@@ -340,6 +363,23 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>加载中...</Text>
           </View>
+        ) : loadError ? (
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIcon}>
+              <Icons.RefreshCw size={40} color={colors['text-tertiary']} />
+            </View>
+            <Text style={styles.emptyTitle}>花园加载失败</Text>
+            <Text style={styles.emptySubtitle}>{loadError}</Text>
+            <TouchableOpacity
+              onPress={onRefresh}
+              style={styles.emptyAddButton}
+              accessibilityRole="button"
+              accessibilityLabel="重新加载花园"
+            >
+              <Icons.RefreshCw size={18} color="#fff" />
+              <Text style={styles.emptyAddButtonText}>重新加载</Text>
+            </TouchableOpacity>
+          </View>
         ) : filteredPlants.length === 0 ? (
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIcon}>
@@ -347,7 +387,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
             </View>
             <Text style={styles.emptyTitle}>花园空空如也</Text>
             <Text style={styles.emptySubtitle}>添加你的第一株植物，开始养护之旅</Text>
-            <TouchableOpacity onPress={handleAddPlantPress} style={styles.emptyAddButton}>
+            <TouchableOpacity onPress={handleAddPlantPress} style={styles.emptyAddButton}
+              accessibilityRole="button"
+              accessibilityLabel="添加植物">
               <Icons.Plus size={18} color="#fff" />
               <Text style={styles.emptyAddButtonText}>添加植物</Text>
             </TouchableOpacity>
@@ -358,12 +400,14 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
               <View style={styles.plantCard}>
                 <View style={styles.plantImage}>
                   <Icons.Flower2 size={50} color="rgba(255,255,255,0.3)" />
-                  <TouchableOpacity onPress={() => handleDeletePlant(plant.id)} style={styles.deleteButton}>
+                  <TouchableOpacity onPress={() => handleDeletePlant(plant.id)} style={styles.deleteButton}
+                    accessibilityRole="button"
+                    accessibilityLabel="删除植物">
                     <Icons.X size={16} color="#fff" />
                   </TouchableOpacity>
                   <View style={styles.plantImageOverlay}>
-                    <Text style={styles.plantNickname}>{plant.nickname || plant.plant_name}</Text>
-                    <Text style={styles.plantName}>{plant.plant_name}</Text>
+                    <Text style={styles.plantNickname} numberOfLines={1}>{safeText(plant.nickname || plant.plant_name, 40)}</Text>
+                    <Text style={styles.plantName} numberOfLines={1}>{safeText(plant.plant_name, 60)}</Text>
                     {plant.location && (
                       <View style={styles.plantEnvBadge}>
                         <Text style={styles.plantEnvText}>{environmentLabels[plant.location] || plant.location}</Text>
@@ -376,18 +420,21 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
                     <View style={styles.statItem}>
                       <Icons.Clock size={20} color={colors.primary} />
                       <Text style={styles.plantStatValue}>
-                        {new Date(plant.created_at).toLocaleDateString().slice(0, -3)}
+                        {safeFormatDate(plant.created_at, { year: 'numeric', month: '2-digit' })}
                       </Text>
                       <Text style={styles.plantStatLabel}>入园日期</Text>
                     </View>
-                    <TouchableOpacity onPress={() => handleWaterPlant(plant.id)} style={styles.statItem}>
+                    <TouchableOpacity onPress={() => handleWaterPlant(plant.id)} style={styles.statItem}
+                      accessibilityRole="button"
+                      accessibilityLabel="快速浇水">
                       <Icons.Droplets size={20} color={colors.info} />
                       <Text style={[styles.plantStatValue, { color: colors.info }]}>
                         {(() => {
                           const records = plantCareRecords[plant.id] || [];
                           const lastWatering = records.find(r => r.care_type === 'watering');
                           if (lastWatering) {
-                            const days = Math.floor((Date.now() - new Date(lastWatering.created_at).getTime()) / (1000 * 60 * 60 * 24));
+                            const days = safeDaysSince(lastWatering.created_at);
+                            if (days === null) return '浇水';
                             if (days === 0) return '今天已浇';
                             if (days === 1) return '昨天浇';
                             return `${days}天前`;
@@ -403,7 +450,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
                         })()}
                       </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => handleEditPlant(plant)} style={styles.statItem}>
+                    <TouchableOpacity onPress={() => handleEditPlant(plant)} style={styles.statItem}
+                      accessibilityRole="button"
+                      accessibilityLabel="编辑植物">
                       <Icons.Edit2 size={20} color={colors.success} />
                       <Text style={[styles.plantStatValue, { color: colors.success }]}>编辑</Text>
                       <Text style={styles.plantStatLabel}>修改信息</Text>
@@ -431,7 +480,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>添加新植物</Text>
-              <TouchableOpacity onPress={() => setShowAddModal(false)}>
+              <TouchableOpacity onPress={() => setShowAddModal(false)}
+                accessibilityRole="button"
+                accessibilityLabel="关闭">
                 <Icons.X size={24} color={colors['text-tertiary']} />
               </TouchableOpacity>
             </View>
@@ -442,6 +493,8 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
               placeholder="例如：绿萝、吊兰"
               style={styles.input}
               placeholderTextColor={colors['text-tertiary']}
+              maxLength={60}
+              accessibilityLabel="植物名称"
             />
             <Text style={styles.inputLabel}>昵称（选填）</Text>
             <TextInput
@@ -450,6 +503,8 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
               placeholder="例如：小绿、花花"
               style={styles.input}
               placeholderTextColor={colors['text-tertiary']}
+              maxLength={60}
+              accessibilityLabel="植物昵称"
             />
             <Text style={styles.inputLabel}>位置</Text>
             <View style={styles.locationChips}>
@@ -457,6 +512,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
                 <TouchableOpacity
                   key={key}
                   onPress={() => setNewPlantLocation(key)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: newPlantLocation === key }}
+                  accessibilityLabel={'摆放位置 ' + label}
                   style={[styles.locationChip, newPlantLocation === key && styles.locationChipActive]}
                 >
                   <Text style={[styles.locationChipText, newPlantLocation === key && styles.locationChipTextActive]}>
@@ -465,7 +523,12 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity onPress={handleAddPlant} style={styles.submitButton}>
+            <TouchableOpacity onPress={handleAddPlant} style={styles.submitButton}
+              disabled={isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel="添加到花园"
+              accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
+            >
               <Text style={styles.submitButtonText}>添加到花园</Text>
             </TouchableOpacity>
           </View>
@@ -477,7 +540,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>编辑植物</Text>
-              <TouchableOpacity onPress={() => setShowEditModal(false)}>
+              <TouchableOpacity onPress={() => setShowEditModal(false)}
+                accessibilityRole="button"
+                accessibilityLabel="关闭">
                 <Icons.X size={24} color={colors['text-tertiary']} />
               </TouchableOpacity>
             </View>
@@ -488,6 +553,8 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
               placeholder="例如：绿萝、吊兰"
               style={styles.input}
               placeholderTextColor={colors['text-tertiary']}
+              maxLength={60}
+              accessibilityLabel="植物名称"
             />
             <Text style={styles.inputLabel}>昵称（选填）</Text>
             <TextInput
@@ -496,6 +563,8 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
               placeholder="例如：小绿、花花"
               style={styles.input}
               placeholderTextColor={colors['text-tertiary']}
+              maxLength={60}
+              accessibilityLabel="植物昵称"
             />
             <Text style={styles.inputLabel}>位置</Text>
             <View style={styles.locationChips}>
@@ -503,6 +572,9 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
                 <TouchableOpacity
                   key={key}
                   onPress={() => setNewPlantLocation(key)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: newPlantLocation === key }}
+                  accessibilityLabel={'摆放位置 ' + label}
                   style={[styles.locationChip, newPlantLocation === key && styles.locationChipActive]}
                 >
                   <Text style={[styles.locationChipText, newPlantLocation === key && styles.locationChipTextActive]}>
@@ -511,7 +583,12 @@ export function GardenScreen({ onNavigate, currentTab, onTabChange, isLoggedIn, 
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity onPress={handleSaveEdit} style={styles.submitButton}>
+            <TouchableOpacity onPress={handleSaveEdit} style={styles.submitButton}
+              disabled={isSubmitting}
+              accessibilityRole="button"
+              accessibilityLabel="保存修改"
+              accessibilityState={{ disabled: isSubmitting, busy: isSubmitting }}
+            >
               <Text style={styles.submitButtonText}>保存修改</Text>
             </TouchableOpacity>
           </View>

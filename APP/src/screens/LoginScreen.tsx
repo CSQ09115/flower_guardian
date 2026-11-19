@@ -1,10 +1,11 @@
 // 登录页面
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TextInput, TouchableOpacity, Text, KeyboardAvoidingView, Platform, Alert, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icons } from '../components/Icon';
 import { colors, spacing } from '../constants/theme';
 import { login } from '../services/auth';
+import { getApiErrorMessage, safeText } from '../utils/resilience';
 
 interface LoginScreenProps {
   onGoBack: () => void;
@@ -18,8 +19,10 @@ export function LoginScreen({ onGoBack, onLoginSuccess, onSwitchToRegister, onSw
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const busyRef = useRef(false);
 
   const handleLogin = async () => {
+    if (busyRef.current) return;
     if (!email.trim()) {
       Alert.alert('提示', '请输入邮箱');
       return;
@@ -29,14 +32,21 @@ export function LoginScreen({ onGoBack, onLoginSuccess, onSwitchToRegister, onSw
       return;
     }
 
+    busyRef.current = true;
     setIsLoading(true);
-    const result = await login({ email, password });
-    setIsLoading(false);
-
-    if (result.success) {
-      onLoginSuccess();
-    } else {
-      Alert.alert('登录失败', result.error || '请检查输入');
+    try {
+      const result = await login({ email: safeText(email, 254), password });
+      if (result.success) {
+        onLoginSuccess();
+      } else {
+        Alert.alert('登录失败', result.error || '请检查输入');
+      }
+    } catch (error) {
+      // 网络异常时给出可恢复提示，避免按钮卡在登录中
+      Alert.alert('登录失败', getApiErrorMessage(error, '无法登录，请稍后重试'));
+    } finally {
+      busyRef.current = false;
+      setIsLoading(false);
     }
   };
 
@@ -48,7 +58,9 @@ export function LoginScreen({ onGoBack, onLoginSuccess, onSwitchToRegister, onSw
       >
         {/* 头部 */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
+          <TouchableOpacity onPress={onGoBack} style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="返回">
             <Icons.ChevronLeft size={22} color={colors.primary} />
           </TouchableOpacity>
         </View>
@@ -80,6 +92,8 @@ export function LoginScreen({ onGoBack, onLoginSuccess, onSwitchToRegister, onSw
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
+                maxLength={254}
+                accessibilityLabel="邮箱"
               />
             </View>
 
@@ -95,10 +109,15 @@ export function LoginScreen({ onGoBack, onLoginSuccess, onSwitchToRegister, onSw
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
+                maxLength={128}
+                accessibilityLabel="密码"
                 autoCapitalize="none"
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? '隐藏密码' : '显示密码'}
+                accessibilityState={{ selected: showPassword }}
                 style={styles.eyeButton}
               >
                 {showPassword ? (
@@ -112,6 +131,8 @@ export function LoginScreen({ onGoBack, onLoginSuccess, onSwitchToRegister, onSw
             {/* 登录按钮 */}
             <TouchableOpacity
               onPress={handleLogin}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isLoading, busy: isLoading }}
               disabled={isLoading}
               style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
               activeOpacity={0.8}
@@ -122,14 +143,18 @@ export function LoginScreen({ onGoBack, onLoginSuccess, onSwitchToRegister, onSw
             </TouchableOpacity>
 
             {/* 忘记密码链接 */}
-            <TouchableOpacity onPress={onSwitchToForgotPassword} style={styles.forgotPasswordSection}>
+            <TouchableOpacity onPress={onSwitchToForgotPassword} style={styles.forgotPasswordSection}
+            accessibilityRole="button"
+            accessibilityLabel="忘记密码">
               <Text style={styles.forgotPasswordText}>忘记密码？</Text>
             </TouchableOpacity>
 
             {/* 注册链接 */}
             <View style={styles.registerSection}>
               <Text style={styles.registerText}>还没有账号？</Text>
-              <TouchableOpacity onPress={onSwitchToRegister}>
+              <TouchableOpacity onPress={onSwitchToRegister}
+              accessibilityRole="button"
+              accessibilityLabel="去注册">
                 <Text style={styles.registerLink}>立即注册</Text>
               </TouchableOpacity>
             </View>

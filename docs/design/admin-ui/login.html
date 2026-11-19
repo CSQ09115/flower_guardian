@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>登录 · 护花使者运营后台</title>
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+<div class="login">
+  <div class="login-card">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:24px;height:24px;color:var(--accent);margin-bottom:16px"><path d="M20 4c0 9-5.4 14-11 14-3 0-5-2-5-4.6C4 8.4 10.4 4 20 4Z"/><path d="M4 20c2.5-5 7-8.5 12-10"/></svg>
+    <h1>登录运营后台</h1>
+    <p class="sub">护花使者 · 设备、订单与植物库的日常运维</p>
+    <form>
+      <div class="field">
+        <label for="u">账号</label>
+        <input class="input" id="u" type="text" autocomplete="username" value="ops@huahuashizhe.cn">
+      </div>
+      <div class="field">
+        <label for="p">密码</label>
+        <input class="input" id="p" type="password" autocomplete="current-password" placeholder="请输入密码" value="password">
+      </div>
+      <p class="err" role="alert">账号或密码不正确，还可尝试 4 次。</p>
+      <button class="btn primary" type="submit">登录</button>
+    </form>
+    <div class="login-foot">仅限授权人员访问。登录会记录操作人、时间与来源 IP。</div>
+  </div>
+  <div class="login-stamp"><span>环境：生产 · 华东</span><span>v1.0.0</span></div>
+</div>
+</body>
+</html>

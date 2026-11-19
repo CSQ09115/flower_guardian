@@ -1,5 +1,5 @@
 // 注册页面
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, StyleSheet, TextInput, TouchableOpacity, Text, KeyboardAvoidingView, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icons } from '../components/Icon';
@@ -7,6 +7,7 @@ import { colors, spacing } from '../constants/theme';
 import { register } from '../services/auth';
 import axios from 'axios';
 import { API_BASE_URL } from '../services/config';
+import { useCountdown, getApiErrorMessage, safeText } from '../utils/resilience';
 
 interface RegisterScreenProps {
   onGoBack: () => void;
@@ -23,10 +24,12 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [sendingCode, setSendingCode] = useState(false);
-  const [codeSent, setCodeSent] = useState(false);
-  const [countdown, setCountdown] = useState(0);
+  const { remaining: countdown, start: startCountdown } = useCountdown();
+  const sendRef = useRef(false);
+  const registerRef = useRef(false);
 
   const handleSendCode = async () => {
+    if (sendRef.current) return;
     if (!email.trim()) {
       Alert.alert('提示', '请输入邮箱');
       return;
@@ -36,33 +39,25 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
       return;
     }
 
+    sendRef.current = true;
     setSendingCode(true);
     try {
       await axios.post(`${API_BASE_URL}/api/users/send-verification-code`, {
-        email: email,
+        email: safeText(email, 254),
         purpose: 'register',
       });
-      setCodeSent(true);
-      setCountdown(60);
-      const timer = setInterval(() => {
-        setCountdown(prev => {
-          if (prev <= 1) {
-            clearInterval(timer);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
+      startCountdown(60);
       Alert.alert('验证码已发送', '请前往邮箱查看验证码');
     } catch (error: any) {
-      const message = error.response?.data?.detail || '发送失败，请稍后重试';
-      Alert.alert('发送失败', message);
+      Alert.alert('发送失败', getApiErrorMessage(error, '发送失败，请稍后重试'));
     } finally {
+      sendRef.current = false;
       setSendingCode(false);
     }
   };
 
   const handleRegister = async () => {
+    if (registerRef.current) return;
     if (!email.trim()) {
       Alert.alert('提示', '请输入邮箱');
       return;
@@ -88,18 +83,19 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
       return;
     }
 
+    registerRef.current = true;
     setIsLoading(true);
     try {
       // 先验证邮箱验证码
       await axios.post(`${API_BASE_URL}/api/users/verify-email`, {
-        email: email,
-        code: code,
+        email: safeText(email, 254),
+        code: safeText(code, 6),
       });
 
       // 验证码正确后再调用后端注册API
       await axios.post(`${API_BASE_URL}/api/users/register`, {
-        email: email,
-        username: username.trim(),
+        email: safeText(email, 254),
+        username: safeText(username, 40),
         password: password,
       });
 
@@ -107,9 +103,9 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
         { text: '确定', onPress: () => onRegisterSuccess() },
       ]);
     } catch (error: any) {
-      const message = error.response?.data?.detail || '注册失败，请检查输入';
-      Alert.alert('注册失败', message);
+      Alert.alert('注册失败', getApiErrorMessage(error, '注册失败，请检查输入'));
     } finally {
+      registerRef.current = false;
       setIsLoading(false);
     }
   };
@@ -122,7 +118,9 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
       >
         {/* 头部 */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={onGoBack} style={styles.backButton}>
+          <TouchableOpacity onPress={onGoBack} style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="返回">
             <Icons.ChevronLeft size={22} color={colors.primary} />
           </TouchableOpacity>
         </View>
@@ -155,12 +153,17 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoCorrect={false}
+                  maxLength={254}
+                  accessibilityLabel="邮箱"
                 />
               </View>
               <TouchableOpacity
                 onPress={handleSendCode}
                 disabled={sendingCode || countdown > 0}
                 style={[styles.codeButton, (sendingCode || countdown > 0) && styles.codeButtonDisabled]}
+                accessibilityRole="button"
+                accessibilityLabel={countdown > 0 ? `${countdown}秒后可重新获取验证码` : '获取验证码'}
+                accessibilityState={{ disabled: sendingCode || countdown > 0 }}
               >
                 <Text style={styles.codeButtonText}>
                   {countdown > 0 ? `${countdown}s` : sendingCode ? '发送中...' : '获取验证码'}
@@ -196,6 +199,8 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
+                maxLength={40}
+                accessibilityLabel="用户名"
               />
             </View>
 
@@ -212,10 +217,15 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                maxLength={128}
+                accessibilityLabel="密码"
               />
               <TouchableOpacity
                 onPress={() => setShowPassword(!showPassword)}
                 style={styles.eyeButton}
+                accessibilityRole="button"
+                accessibilityLabel={showPassword ? '隐藏密码' : '显示密码'}
+                accessibilityState={{ selected: showPassword }}
               >
                 {showPassword ? (
                   <Icons.EyeOff size={20} color={colors['text-tertiary']} />
@@ -238,6 +248,8 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
                 onChangeText={setConfirmPassword}
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
+                maxLength={128}
+                accessibilityLabel="确认密码"
               />
             </View>
 
@@ -247,6 +259,8 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
               disabled={isLoading}
               style={[styles.registerButton, isLoading && styles.registerButtonDisabled]}
               activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: isLoading, busy: isLoading }}
             >
               <Text style={styles.registerButtonText}>
                 {isLoading ? '注册中...' : '注册'}
@@ -256,7 +270,9 @@ export function RegisterScreen({ onGoBack, onRegisterSuccess, onSwitchToLogin }:
             {/* 登录链接 */}
             <View style={styles.loginSection}>
               <Text style={styles.loginText}>已有账号？</Text>
-              <TouchableOpacity onPress={onSwitchToLogin}>
+              <TouchableOpacity onPress={onSwitchToLogin}
+                accessibilityRole="button"
+                accessibilityLabel="去登录">
                 <Text style={styles.loginLink}>立即登录</Text>
               </TouchableOpacity>
             </View>

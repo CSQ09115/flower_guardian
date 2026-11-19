@@ -11,10 +11,12 @@ from app.models.address import Address
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.chat import Conversation, ChatMessage
 from app.models.weather import WeatherQuery
+from app.models.device import Device, DeviceReading, DeviceAlert
 
 __all__ = [
     "User", "Plant", "UserPlant", "Reminder", "Diary", "Product",
     "Order", "OrderItem", "CartItem", "Payment", "DiagnosisRecord",
     "Address", "EmailVerification", "VerificationPurpose",
-    "Conversation", "ChatMessage", "WeatherQuery"
+    "Conversation", "ChatMessage", "WeatherQuery",
+    "Device", "DeviceReading", "DeviceAlert"
 ]

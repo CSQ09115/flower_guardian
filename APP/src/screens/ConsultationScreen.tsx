@@ -1,6 +1,7 @@
 // 问诊对话页面 - 带打字机效果
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Animated } from 'react-native';
+import { useReducedMotion, getApiErrorMessage } from '../utils/resilience';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,8 +21,17 @@ function TypewriterText({ text, onComplete }: { text: string; onComplete?: () =>
   const [displayText, setDisplayText] = useState('');
   const [isComplete, setIsComplete] = useState(false);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
+    // 系统开启「减少动态效果」时直接显示全文，不逐字播放
+    if (reducedMotion) {
+      setDisplayText(text);
+      setIsComplete(true);
+      onComplete?.();
+      return;
+    }
+
     // 重置状态
     setDisplayText('');
     setIsComplete(false);
@@ -48,7 +58,7 @@ function TypewriterText({ text, onComplete }: { text: string; onComplete?: () =>
         clearInterval(intervalRef.current);
       }
     };
-  }, [text, onComplete]);
+  }, [text, onComplete, reducedMotion]);
 
   return (
     <Text style={styles.messageText}>
@@ -72,66 +82,61 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
   const dot1Anim = useRef(new Animated.Value(1)).current;
   const dot2Anim = useRef(new Animated.Value(1)).current;
   const dot3Anim = useRef(new Animated.Value(1)).current;
+  const reducedMotion = useReducedMotion();
+
+  // 所有延迟任务集中登记，卸载时统一清理，避免 setState / 动画在卸载后继续运行
+  const timersRef = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
+  const later = useCallback((fn: () => void, ms: number) => {
+    const t = setTimeout(() => {
+      timersRef.current.delete(t);
+      fn();
+    }, ms);
+    timersRef.current.add(t);
+  }, []);
+
+  useEffect(() => () => {
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current.clear();
+  }, []);
 
   useEffect(() => {
-    if (isLoading) {
-      // 第一个点动画 - 慢速
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(dot1Anim, {
-            toValue: 0.4,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(dot1Anim, {
-            toValue: 1.2,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ])
-      ).start();
+    const loops: Array<{ stop: () => void }> = [];
+    const delays: ReturnType<typeof setTimeout>[] = [];
+    [dot1Anim, dot2Anim, dot3Anim].forEach(anim => anim.setValue(1));
 
-      // 第二个点动画 - 延迟启动
-      setTimeout(() => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(dot2Anim, {
-              toValue: 0.4,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(dot2Anim, {
-              toValue: 1.2,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
-      }, 300);
+    if (!isLoading || reducedMotion) return;
 
-      // 第三个点动画 - 再延迟启动
-      setTimeout(() => {
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(dot3Anim, {
-              toValue: 0.4,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-            Animated.timing(dot3Anim, {
-              toValue: 1.2,
-              duration: 600,
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
-      }, 600);
-    } else {
-      dot1Anim.setValue(1);
-      dot2Anim.setValue(1);
-      dot3Anim.setValue(1);
-    }
-  }, [isLoading]);
+    const makeDotLoop = (anim: Animated.Value) => Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 0.4, duration: 600, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 1.2, duration: 600, useNativeDriver: true }),
+      ])
+    );
+    const startLoop = (anim: Animated.Value) => {
+      const loop = makeDotLoop(anim);
+      loops.push(loop);
+      loop.start();
+    };
+    const schedule = (fn: () => void, ms: number) => {
+      const t = setTimeout(() => {
+        timersRef.current.delete(t);
+        fn();
+      }, ms);
+      timersRef.current.add(t);
+      delays.push(t);
+    };
+
+    startLoop(dot1Anim);
+    schedule(() => startLoop(dot2Anim), 300);
+    schedule(() => startLoop(dot3Anim), 600);
+
+    // 状态切换或卸载时停止循环并取消尚未触发的延迟启动
+    return () => {
+      delays.forEach(clearTimeout);
+      delays.forEach(t => timersRef.current.delete(t));
+      loops.forEach(loop => loop.stop());
+    };
+  }, [isLoading, reducedMotion, dot1Anim, dot2Anim, dot3Anim]);
 
   // 加载或创建对话
   const loadConversation = useCallback(async () => {
@@ -192,7 +197,7 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
 
               setConversation(updated);
               setIsLoading(false);
-              setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+              later(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
             } catch (sendError) {
               console.error('Send initial message error:', sendError);
               setIsLoading(false);
@@ -209,7 +214,7 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
             updatedAt: new Date(backendConv.updated_at).getTime(),
           };
           setConversation(converted);
-          setTimeout(() => flatListRef.current?.scrollToEnd(), 100);
+          later(() => flatListRef.current?.scrollToEnd(), 100);
           return;
         }
       } catch (error: any) {
@@ -220,7 +225,7 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
       const found = await getConversation(String(conversationId));
       if (found) {
         setConversation(found);
-        setTimeout(() => flatListRef.current?.scrollToEnd(), 100);
+        later(() => flatListRef.current?.scrollToEnd(), 100);
         return;
       }
     }
@@ -269,14 +274,14 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
         const aiMessageId = updated.messages[updated.messages.length - 1].id;
         setTypingMessageId(aiMessageId);
         setConversation(updated);
-        setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+        later(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
       } catch (error) {
         console.error('Auto send diagnosis error:', error);
         setIsLoading(false);
         setIsTyping(false);
       }
     }
-  }, [conversationId, diagnosisContext]);
+  }, [conversationId, diagnosisContext, later]);
 
   useEffect(() => {
     loadConversation();
@@ -317,7 +322,7 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
     });
 
     // 滚动到底部
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+    later(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
 
     try {
       // 调用 API 发送消息
@@ -368,7 +373,7 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
         const messages = prev.messages.filter(msg => msg.id !== pendingAiMessageId);
         return { ...prev, messages };
       });
-      Alert.alert('发送失败', '请检查网络连接后重试');
+      Alert.alert('发送失败', getApiErrorMessage(error, '请检查网络连接后重试'));
       setIsLoading(false);
       setIsTyping(false);
     }
@@ -383,6 +388,7 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
 
   // 发送图片
   const handleAttachImage = async () => {
+    if (isLoading) return;
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       Alert.alert('权限不足', '需要相册权限');
@@ -421,7 +427,7 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
           }]
         };
       });
-      setTimeout(() => flatListRef.current?.scrollToEnd(), 100);
+      later(() => flatListRef.current?.scrollToEnd(), 100);
 
       try {
         const updated = await sendMessage(conversation, '[图片]', imageUri);
@@ -445,7 +451,7 @@ export function ConsultationScreen({ onGoBack, conversationId, diagnosisContext 
           const messages = prev.messages.filter(msg => msg.id !== pendingAiMessageId);
           return { ...prev, messages };
         });
-        Alert.alert('发送失败', '请检查网络连接后重试');
+        Alert.alert('发送失败', getApiErrorMessage(error, '请检查网络连接后重试'));
         setIsLoading(false);
         setIsTyping(false);
       }

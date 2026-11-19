@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>护花使者 · 运营后台</title>
+<meta name="description" content="护花使者运营后台：经营概览、商品与订单、用户与植物库，以及 ESP32 花盆设备的传感器读数、阈值与标定管理。">
+<meta name="theme-color" content="#f6f3ec">
+<link rel="icon" href="../assets/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="../assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/admin.css?v=2026-11-18n">
+<script type="module" src="assets/js/app.js?v=2026-11-18n"></script>
+</head>
+<body>
+<a class="sr-only" href="#view">跳到内容</a>
+
+<div class="app" id="app">
+  <aside class="sidebar" id="sidebar">
+    <a class="sidebar__brand" href="#/overview">
+      <img src="../assets/logo.png" alt="" width="34" height="34" decoding="async">
+      <span><b>护花使者</b><small>OPERATIONS</small></span>
+    </a>
+    <nav class="sidebar__nav" id="sidebar-nav" aria-label="后台导航"></nav>
+    <div class="sidebar__foot" id="sidebar-foot"></div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn topbar__menu" id="menu-toggle" type="button" aria-label="打开导航" aria-expanded="false" aria-controls="sidebar"></button>
+      <div class="crumb" id="crumb"><a href="#/overview">运营后台</a><span>/</span><b>概览</b></div>
+      <div class="topbar__actions">
+        <span class="source-pill" id="source-pill"><span class="source-dot"></span>载入中</span>
+        <button class="icon-btn" id="refresh" type="button" aria-label="刷新当前页面" title="刷新当前页面"></button>
+      </div>
+    </header>
+    <main class="view" id="view" tabindex="-1">
+      <div class="empty"><span class="icon" data-icon="sprout"></span><b>正在载入控制台</b><p>正在读取设备与经营数据。</p></div>
+    </main>
+  </div>
+</div>
+
+<div class="modal-root" id="modal-root"></div>
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<noscript>
+  <div style="padding:32px;font-family:sans-serif">运营后台需要启用 JavaScript 才能运行。</div>
+</noscript>
+</body>
+</html>

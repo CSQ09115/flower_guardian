@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { getOrderDetail, cancelOrder, reorder, Order } from '../services/storeService';
 import { colors, spacing, shadows } from '../constants/theme';
 import { NavigationProps } from '../navigation/AppNavigator';
+import { safeFormatDateTime } from '../utils/resilience';
 
 interface OrderDetailScreenProps extends NavigationProps {}
 
@@ -116,7 +117,7 @@ export function OrderDetailScreen({ route, navigation, isLoggedIn, onRequireLogi
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>订单信息</Text>
-          <Text style={styles.infoText}>下单时间: {new Date(order.created_at).toLocaleString()}</Text>
+          <Text style={styles.infoText}>下单时间: {safeFormatDateTime(order.created_at)}</Text>
         </View>
       </ScrollView>
 

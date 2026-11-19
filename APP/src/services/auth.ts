@@ -216,7 +216,6 @@ export const login = async (form: LoginForm): Promise<AuthResponse> => {
 
     const loginUrl = `${API_BASE_URL}/api/users/login`;
     console.log('[Login] Request URL:', loginUrl);
-    console.log('[Login] Body:', params.toString());
 
     const response = await fetch(loginUrl, {
       method: 'POST',
@@ -228,7 +227,6 @@ export const login = async (form: LoginForm): Promise<AuthResponse> => {
 
     console.log('[Login] Response status:', response.status);
     const responseText = await response.text();
-    console.log('[Login] Response body:', responseText);
 
     if (!response.ok) {
       try {
@@ -388,11 +386,8 @@ export const isAuthenticated = async (): Promise<boolean> => {
 
     // 解码 payload (第二部分)
     const payloadPart = parts[1];
-    console.log('[Auth] payloadPart:', payloadPart);
     const decodedPayload = base64Decode(payloadPart);
-    console.log('[Auth] decoded payload:', decodedPayload);
     const payload = JSON.parse(decodedPayload);
-    console.log('[Auth] payload:', payload);
 
     // 检查 exp 是否过期
     if (payload.exp) {
@@ -442,9 +437,6 @@ export const sendVerificationCode = async (email: string): Promise<{ success: bo
   } catch (e) {
     console.error('Failed to store verification code:', e);
   }
-
-  // 开发环境下返回验证码
-  console.log(`验证码: ${code}`);
 
   return { success: true, code };
 };

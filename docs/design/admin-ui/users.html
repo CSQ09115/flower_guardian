@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>用户 · 护花使者运营后台</title>
+<link rel="stylesheet" href="assets/admin.css">
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+<div class="brand"><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M20 4c0 9-5.4 14-11 14-3 0-5-2-5-4.6C4 8.4 10.4 4 20 4Z"/><path d="M4 20c2.5-5 7-8.5 12-10"/></svg><div class="name">护花使者<span class="sub">运营后台</span></div></div>
+<div class="group-label">概览</div><a class="nav-item" href="overview.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>总览</a><div class="group-label">设备</div><a class="nav-item" href="devices.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6.5" y="6.5" width="11" height="11" rx="2"/><path d="M10 3v2M14 3v2M10 19v2M14 19v2M3 10h2M3 14h2M19 10h2M19 14h2"/></svg>设备与传感</a><div class="group-label">经营</div><a class="nav-item" href="orders.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 8.4 12 4 4 8.4v7.2L12 20l8-4.4V8.4Z"/><path d="M4 8.4 12 12.8l8-4.4M12 12.8V20"/></svg>订单</a><div class="group-label">用户与内容</div><a class="nav-item" href="users.html" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M16 5.4a3.2 3.2 0 0 1 0 6.2M17.5 14.9c2 .6 3.5 2.4 3.5 4.6"/></svg>用户</a><div class="group-label">系统</div><a class="nav-item" href="settings.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="2.8"/><path d="M12 3v2.4M12 18.6V21M4.2 7.5l2 1.2M17.8 15.3l2 1.2M4.2 16.5l2-1.2M17.8 8.7l2-1.2"/></svg>设置</a>
+<div class="foot"><span>环境：生产 · 华东</span><span>v1.0.0</span></div>
+</aside>
+<main class="canvas">
+<div class="title-row">
+  <div><h1>用户</h1><p class="sub">累计 1,842 位用户 · 本周新增 63 位 · 7 日活跃 412 位</p></div>
+  <div class="title-actions"><button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 4v11M7.5 11 12 15.5 16.5 11M4.5 19.5h15"/></svg>导出</button></div>
+</div>
+
+<div class="kpis">
+  <div class="kpi"><p class="kpi-label">注册用户</p><p class="kpi-value">1,842</p><p class="delta">本周 <span class="up">+63</span></p></div>
+  <div class="kpi"><p class="kpi-label">7 日活跃</p><p class="kpi-value">412<small>人</small></p><p class="delta">占总用户 22.4%</p></div>
+  <div class="kpi"><p class="kpi-label">绑定设备</p><p class="kpi-value">97<small>人</small></p><p class="delta">5.3% 用户拥有硬件</p></div>
+  <div class="kpi"><p class="kpi-label">管理员账号</p><p class="kpi-value">4<small>个</small></p><p class="delta">1 个近 30 天未登录</p></div>
+</div>
+
+<div class="filters">
+  <label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="10.5" cy="10.5" r="6"/><path d="m15 15 4.5 4.5"/></svg><input class="input" type="search" placeholder="搜索用户名或邮箱"></label>
+  <select class="input"><option>全部角色</option><option>普通用户</option><option>管理员</option></select>
+  <span class="spacer"></span>
+  <span class="stamp">按注册时间倒序</span>
+</div>
+
+<div class="panel">
+  <div class="table-wrap"><table>
+    <thead><tr><th>用户</th><th>邮箱</th><th>角色</th><th class="n">植物</th><th class="n">订单</th><th>注册时间</th><th>最近登录</th><th class="n"></th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="cell-main"><div class="thumb" aria-hidden="true"></div><div><span class="name">林小满</span><span class="sub">ID 1842</span></div></div></td>
+        <td class="muted">linxiaoman@qq.com</td>
+        <td><span class="pill">普通用户</span></td>
+        <td class="n">6</td><td class="n">12</td>
+        <td class="muted">2026-11-02</td><td class="muted">今天 13:40</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+      <tr>
+        <td><div class="cell-main"><div class="thumb" aria-hidden="true"></div><div><span class="name">周洋</span><span class="sub">ID 1841</span></div></div></td>
+        <td class="muted">zhouyang1993@163.com</td>
+        <td><span class="pill">普通用户</span></td>
+        <td class="n">3</td><td class="n">5</td>
+        <td class="muted">2026-10-28</td><td class="muted">今天 13:16</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+      <tr>
+        <td><div class="cell-main"><div class="thumb" aria-hidden="true"></div><div><span class="name">陈雨桐</span><span class="sub">ID 1836</span></div></div></td>
+        <td class="muted">chenyutong@foxmail.com</td>
+        <td><span class="pill">普通用户</span></td>
+        <td class="n">14</td><td class="n">28</td>
+        <td class="muted">2026-09-15</td><td class="muted">今天 12:50</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+      <tr>
+        <td><div class="cell-main"><div class="thumb" aria-hidden="true"></div><div><span class="name">苏晚</span><span class="sub">ID 1204 · 已绑定 2 台设备</span></div></div></td>
+        <td class="muted">suwan_0412@qq.com</td>
+        <td><span class="pill">普通用户</span></td>
+        <td class="n">9</td><td class="n">7</td>
+        <td class="muted">2026-06-30</td><td class="muted">昨天 22:12</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+      <tr>
+        <td><div class="cell-main"><div class="thumb" aria-hidden="true"></div><div><span class="name">运营账号 ops</span><span class="sub">ID 1002</span></div></div></td>
+        <td class="muted">ops@huahuashizhe.cn</td>
+        <td><span class="pill acc">管理员</span></td>
+        <td class="n">0</td><td class="n">0</td>
+        <td class="muted">2026-03-01</td><td class="muted">今天 13:55</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+      <tr>
+        <td><div class="cell-main"><div class="thumb" aria-hidden="true"></div><div><span class="name">硬件账号 hw</span><span class="sub">ID 1003 · 近 30 天未登录</span></div></div></td>
+        <td class="muted">hw@huahuashizhe.cn</td>
+        <td><span class="pill acc">管理员</span></td>
+        <td class="n">0</td><td class="n">0</td>
+        <td class="muted">2026-03-01</td><td class="muted">2026-10-11</td>
+        <td class="n"><button class="btn quiet">详情</button></td>
+      </tr>
+    </tbody>
+  </table></div>
+</div>
+</main>
+</div>
+
+</body>
+</html>

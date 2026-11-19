@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>界面规格预览 · 护花使者运营后台</title>
+<link rel="stylesheet" href="assets/admin.css">
+<style>
+  .wrap{max-width:1000px;margin:0 auto;padding:40px var(--pad) 64px}
+  .lede{margin-top:8px;color:var(--muted);font-size:13px;max-width:56ch}
+  .shots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:28px}
+  .shot{display:grid;gap:0;border:1px solid var(--border);border-radius:var(--radius-card);overflow:hidden;background:var(--surface)}
+  .shot img{width:100%;display:block;border-bottom:1px solid var(--border);background:var(--ground)}
+  .shot .cap{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:12px 16px}
+  .shot .cap b{font-weight:600;font-size:14px}
+  .shot .cap span{color:var(--faint);font-size:12px}
+  .shot:hover{box-shadow:0 0 0 1px var(--control)}
+  @media (max-width:760px){.shots{grid-template-columns:minmax(0,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 style="font-size:24px;font-weight:600;letter-spacing:-.015em">界面规格预览</h1>
+  <p class="lede">护花使者运营后台的七屏静态稿，对应功能分析文档第 7 章。方向为 app screen / smb-admin：色彩只上数据，不上框架；表面靠 1px 分隔线；每个屏幕只回答一个问题。点击任意一屏进入可交互的 HTML。</p>
+
+  <div class="shots">
+    <a class="shot" href="login.html"><img src="shots/login.png" alt="登录页"><div class="cap"><b>S1 登录</b><span>账号密码 · 单卡片</span></div></a>
+    <a class="shot" href="overview.html"><img src="shots/overview.png" alt="总览页"><div class="cap"><b>S2 总览</b><span>今天是否需要人工介入</span></div></a>
+    <a class="shot" href="devices.html"><img src="shots/devices.png" alt="设备列表"><div class="cap"><b>S3 设备与传感</b><span>哪台设备现在有问题</span></div></a>
+    <a class="shot" href="device.html"><img src="shots/device.png" alt="设备详情"><div class="cap"><b>S4 设备详情</b><span>这台设备读数可信吗</span></div></a>
+    <a class="shot" href="orders.html"><img src="shots/orders.png" alt="订单列表"><div class="cap"><b>S5 订单</b><span>今天有哪些单要发</span></div></a>
+    <a class="shot" href="users.html"><img src="shots/users.png" alt="用户列表"><div class="cap"><b>S6 用户</b><span>谁在用，谁有硬件</span></div></a>
+    <a class="shot" href="settings.html"><img src="shots/settings.png" alt="设置页"><div class="cap"><b>S7 设置</b><span>判定与保留规则怎么定</span></div></a>
+  </div>
+
+  <p class="lede" style="margin-top:28px">静态稿使用同一份 <span class="mono">assets/admin.css</span> 与 <span class="mono">assets/charts.js</span>，图表为运行时绘制的内联 SVG，无外部依赖。数据为示意值，仅用于验证版式与信息密度。</p>
+</div>
+</body>
+</html>

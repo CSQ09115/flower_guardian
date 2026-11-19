@@ -6,6 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Icons } from '../components/Icon';
 import { colors, spacing, borderRadius, shadows, fontSize, fontWeight } from '../constants/theme';
 import { getConversations, Conversation, deleteConversation } from '../services/consultationService';
+import { safeDaysSince, safeFormatDate, getApiErrorMessage } from '../utils/resilience';
 
 interface Props {
   onGoBack: () => void;
@@ -69,8 +70,12 @@ export function ConsultationListScreen({ onGoBack, onNavigate, isLoggedIn, onReq
           text: '删除',
           style: 'destructive',
           onPress: async () => {
-            await deleteConversation(id);
-            loadConversations();
+            try {
+              await deleteConversation(id);
+              loadConversations();
+            } catch (error) {
+              Alert.alert('删除失败', getApiErrorMessage(error, '无法删除对话，请稍后重试'));
+            }
           },
         },
       ]
@@ -79,18 +84,21 @@ export function ConsultationListScreen({ onGoBack, onNavigate, isLoggedIn, onReq
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    if (isNaN(date.getTime())) return '—';
+    const days = safeDaysSince(timestamp) ?? 0;
 
     if (days === 0) {
-      return date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+      try {
+        return new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }).format(date);
+      } catch {
+        return date.getHours().toString().padStart(2, '0') + ':' + date.getMinutes().toString().padStart(2, '0');
+      }
     } else if (days === 1) {
       return '昨天';
     } else if (days < 7) {
       return days + '天前';
     } else {
-      return (date.getMonth() + 1) + '-' + date.getDate();
+      return safeFormatDate(timestamp, { month: 'numeric', day: 'numeric' });
     }
   };
 
@@ -103,6 +111,8 @@ export function ConsultationListScreen({ onGoBack, onNavigate, isLoggedIn, onReq
         style={styles.chatItem}
         onPress={() => handleOpenChat(item.id)}
         onLongPress={() => handleDeleteChat(item.id, item.title)}
+        accessibilityRole="button"
+        accessibilityLabel={'打开对话 ' + (item.title || '新对话')}
         activeOpacity={0.7}
       >
         <View style={styles.chatIcon}>
@@ -128,7 +138,9 @@ export function ConsultationListScreen({ onGoBack, onNavigate, isLoggedIn, onReq
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={onGoBack} style={styles.backBtn}>
+        <TouchableOpacity onPress={onGoBack} style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="返回">
           <Icons.ChevronLeft size={24} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>问诊室</Text>

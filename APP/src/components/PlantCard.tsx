@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Icons } from './Icon';
 import { colors, spacing, borderRadius } from '../constants/theme';
+import { safeText } from '../utils/resilience';
 
 interface PlantCardProps {
   visible: boolean;
@@ -59,7 +60,9 @@ export function PlantCard({ visible, plant, onClose, onAddToGarden }: PlantCardP
         <View style={styles.content}>
           <ScrollView showsVerticalScrollIndicator={false}>
             {/* 关闭按钮 */}
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}
+              accessibilityRole="button"
+              accessibilityLabel="关闭">
               <Icons.X size={20} color={colors['text-tertiary']} />
             </TouchableOpacity>
 
@@ -69,13 +72,13 @@ export function PlantCard({ visible, plant, onClose, onAddToGarden }: PlantCardP
             </View>
 
             {/* 植物名称 */}
-            <Text style={styles.plantName}>{plant.name}</Text>
-            <Text style={styles.scientificName}>{plant.scientificName}</Text>
+            <Text style={styles.plantName} numberOfLines={2}>{safeText(plant.name, 60) || '未知植物'}</Text>
+            <Text style={styles.scientificName} numberOfLines={1}>{safeText(plant.scientificName, 80)}</Text>
 
             {/* 置信度 */}
             <View style={styles.confidenceBadge}>
               <Text style={styles.confidenceText}>
-                置信度 {Math.round(plant.confidence * 100)}%
+                置信度 {Number.isFinite(Number(plant.confidence)) ? Math.round(Number(plant.confidence) * 100) : 0}%
               </Text>
             </View>
 
@@ -90,24 +93,26 @@ export function PlantCard({ visible, plant, onClose, onAddToGarden }: PlantCardP
               <View style={styles.metricItem}>
                 <Text style={styles.metricLabel}>光照需求</Text>
                 <Icons.Cloud size={18} color={colors['text-secondary']} />
-                <Text style={styles.metricValue}>{plant.lightRequirement || '耐阴'}</Text>
+                <Text style={styles.metricValue} numberOfLines={2}>{safeText(plant.lightRequirement, 40) || '耐阴'}</Text>
               </View>
 
               <View style={styles.metricItem}>
                 <Text style={styles.metricLabel}>水分需求</Text>
                 <Icons.Droplets size={18} color={colors.info} />
-                <Text style={styles.metricValue}>{plant.waterRequirement || '见干见湿'}</Text>
+                <Text style={styles.metricValue} numberOfLines={2}>{safeText(plant.waterRequirement, 40) || '见干见湿'}</Text>
               </View>
             </View>
 
             {/* 描述 */}
             <Text style={styles.description} numberOfLines={3}>
-              {plant.description || '这是一种美丽的植物，适合室内养护。'}
+              {safeText(plant.description, 300) || '这是一种美丽的植物，适合室内养护。'}
             </Text>
 
             {/* 添加按钮 */}
             <TouchableOpacity
               onPress={onAddToGarden}
+              accessibilityRole="button"
+              accessibilityLabel="加入我的花园"
               style={styles.addButton}
               activeOpacity={0.7}
             >

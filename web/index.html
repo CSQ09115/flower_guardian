@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="no-js">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>护花使者 · 你的掌上植物管家</title>
+<meta name="description" content="护花使者是养花小白的植物管家：拍一张照片，认出 47 类常见植物，生成一张写清光照、浇水与常见死法的养护卡，再按你家的位置提醒你什么时候浇水。">
+<meta name="theme-color" content="#f6f3ec">
+<meta property="og:type" content="website">
+<meta property="og:title" content="护花使者 · 让养花不再凭感觉">
+<meta property="og:description" content="拍一张照片，认出它、写清怎么养，并按你家的光照提醒你什么时候浇水。">
+<link rel="icon" href="assets/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/style.css?v=2026-11-16">
+<script>document.documentElement.classList.remove('no-js');if(location.search.indexOf('snap')<0)document.documentElement.classList.add('js');</script>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="nav" id="top">
+  <div class="shell nav__in">
+    <a class="brand" href="#top">
+      <img class="brand__mark" src="assets/logo.png" alt="" width="40" height="40" decoding="async">
+      <span class="brand__text"><b>护花使者</b><small>FLOWER GUARDIAN</small></span>
+    </a>
+
+    <nav class="nav__links" id="nav" aria-label="主导航">
+      <a href="#why">为什么</a>
+      <a href="#card">养护卡</a>
+      <a href="#finder">新手推荐</a>
+      <a href="#features">能力</a>
+      <a href="#faq">常见问题</a>
+    </nav>
+
+    <div class="nav__actions">
+      <a class="btn btn--sm" href="#beta">申请内测 <span class="icon" data-icon="ArrowRight" data-size="16"></span></a>
+      <button class="nav__toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="打开菜单">
+        <span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <!-- 首屏 -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero__wash" aria-hidden="true"></div>
+    <div class="shell hero__grid">
+      <div class="hero__copy">
+        <p class="eyebrow reveal"><span class="eyebrow__dot"></span>植物管家 · 内测中</p>
+        <h1 id="hero-title" class="reveal">让养花<br><span class="hl">不再凭感觉</span></h1>
+        <p class="hero__lede reveal">拍一张照片，认出它叫什么、该怎么养；再按你家的光照，提醒你什么时候浇水。养花这件事，终于有了说明书。</p>
+
+        <div class="hero__cta reveal">
+          <a class="btn" href="#beta">领取内测名额 <span class="icon" data-icon="ArrowRight" data-size="18"></span></a>
+          <a class="btn btn--ghost" href="#card">先看一张养护卡</a>
+        </div>
+
+        <ul class="hero__facts reveal" aria-label="产品概况">
+          <li><b>47</b><span>类常见植物</span></li>
+          <li><b>2</b><span>个识别模型</span></li>
+          <li><b>4</b><span>类养护提醒</span></li>
+        </ul>
+      </div>
+
+      <div class="hero__stage" aria-hidden="true">
+        <div class="hero__sun"></div>
+        <div class="hero__ring"></div>
+
+        <div class="phone">
+          <div class="phone__notch"></div>
+          <div class="phone__screen">
+            <div class="phone__status"><span>9:41</span><span class="phone__sig"><i></i><i></i><i></i></span></div>
+
+            <div class="app-top">
+              <div><small>周五 · 晴 24°</small><strong>早上好</strong></div>
+              <span class="app-avatar" data-icon="User" data-size="18"></span>
+            </div>
+
+            <div class="app-plant">
+              <img src="assets/pothos.jpg" alt="" width="1200" height="750" fetchpriority="high">
+              <span class="app-plant__tag">今天浇水</span>
+              <div class="app-plant__text"><strong>窗台上的绿萝</strong><span>南阳台 · 散光</span></div>
+            </div>
+
+            <div class="app-sec"><span>接下来</span><em>2 件</em></div>
+
+            <div class="app-row">
+              <span class="app-row__ico" data-icon="Droplet" data-size="16"></span>
+              <div><strong>浇水</strong><small>绿萝 · 今天 09:00</small></div>
+              <span class="app-chip">完成</span>
+            </div>
+            <div class="app-row">
+              <span class="app-row__ico app-row__ico--sand" data-icon="Sun" data-size="16"></span>
+              <div><strong>施肥</strong><small>虎皮兰 · 3 天后</small></div>
+              <span class="app-chip app-chip--ghost">延期</span>
+            </div>
+
+            <div class="app-note"><span data-icon="Sparkles" data-size="14"></span>土表干了再浇，别按日子硬浇。</div>
+
+            <div class="app-tabs">
+              <span class="is-on"><i data-icon="Camera" data-size="18"></i>识别</span>
+              <span><i data-icon="Leaf" data-size="18"></i>花园</span>
+              <span><i data-icon="Book" data-size="18"></i>百科</span>
+              <span><i data-icon="User" data-size="18"></i>我的</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="float float--id">
+          <span class="float__ico" data-icon="Search" data-size="18"></span>
+          <div><strong>虎皮兰</strong><small>已加入我的花园</small></div>
+        </div>
+        <div class="float float--water">
+          <span class="float__ico float__ico--coral" data-icon="Droplet" data-size="18"></span>
+          <div><strong>下次浇水</strong><small>3 天后 · 周四</small></div>
+        </div>
+        <div class="float float--count"><strong>47</strong><span>类植物<br>随手拍</span></div>
+        <p class="stage-note">界面示意 · 数据为演示状态</p>
+      </div>
+    </div>
+
+    <div class="hero__strip">
+      <div class="shell hero__strip-in">
+        <span><i data-icon="Camera" data-size="18"></i>拍一张</span>
+        <i class="hero__strip-arrow" data-icon="ArrowRight" data-size="14"></i>
+        <span><i data-icon="Leaf" data-size="18"></i>建个档</span>
+        <i class="hero__strip-arrow" data-icon="ArrowRight" data-size="14"></i>
+        <span><i data-icon="Bell" data-size="18"></i>到点提醒</span>
+        <i class="hero__strip-arrow" data-icon="ArrowRight" data-size="14"></i>
+        <span><i data-icon="ChartLine" data-size="18"></i>看着它长</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 为什么 -->
+  <section class="section intro" id="why" aria-labelledby="why-title">
+    <div class="shell intro__grid">
+      <div class="intro__head reveal">
+        <p class="kicker">01 / 为什么是护花使者</p>
+        <h2 id="why-title">识别只是入口，<br>养下去才是正文。</h2>
+      </div>
+
+      <div class="intro__body">
+        <p class="intro__lead reveal">大多数植物识别 App 到“这是绿萝”就结束了。护花使者接着往下写：它喜欢什么光、多久浇一次、最常见的死法是什么，以及你家这个位置该怎么调整。</p>
+
+        <ol class="principles">
+          <li class="reveal">
+            <span class="principles__no">01</span>
+            <div><h3>先给答案，再给知识</h3><p>不甩术语。放哪、多久浇、别做什么，三句话说完。</p></div>
+          </li>
+          <li class="reveal">
+            <span class="principles__no">02</span>
+            <div><h3>一张卡只写这一盆</h3><p>光照、水分、温度、常见死法，不是复制粘贴的通用攻略。</p></div>
+          </li>
+          <li class="reveal">
+            <span class="principles__no">03</span>
+            <div><h3>提醒跟着环境走</h3><p>南阳台和北卧室，本来就不该用同一个浇水间隔。</p></div>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- 养护卡 -->
+  <section class="section card-sec" id="card" aria-labelledby="card-title">
+    <div class="shell">
+      <div class="sec-head reveal">
+        <p class="kicker">02 / 养护卡</p>
+        <h2 id="card-title">一张卡，<br>写清这盆花怎么活。</h2>
+        <p>下面六张卡，从 App 的 47 类植物库里抽出来。点名字换一张，养护要点一个字没改。</p>
+      </div>
+
+      <div class="card-layout">
+        <div class="tabs reveal" role="tablist" aria-label="选择一种植物" aria-orientation="vertical">
+          <button class="tab is-active" id="tab-pothos" role="tab" aria-selected="true" aria-controls="care-panel" tabindex="0" data-plant="pothos"><span>01</span>绿萝</button>
+          <button class="tab" id="tab-monstera" role="tab" aria-selected="false" aria-controls="care-panel" tabindex="-1" data-plant="monstera"><span>02</span>龟背竹</button>
+          <button class="tab" id="tab-snake" role="tab" aria-selected="false" aria-controls="care-panel" tabindex="-1" data-plant="snake"><span>03</span>虎皮兰</button>
+          <button class="tab" id="tab-peace" role="tab" aria-selected="false" aria-controls="care-panel" tabindex="-1" data-plant="peace"><span>04</span>白掌</button>
+          <button class="tab" id="tab-aloe" role="tab" aria-selected="false" aria-controls="care-panel" tabindex="-1" data-plant="aloe"><span>05</span>芦荟</button>
+          <button class="tab" id="tab-ivy" role="tab" aria-selected="false" aria-controls="care-panel" tabindex="-1" data-plant="ivy"><span>06</span>常春藤</button>
+          <p class="tabs__note">养护要点来自 App 原文。你自己的植物，还会多一栏：上次浇水是什么时候。</p>
+        </div>
+
+        <article class="care reveal" id="care-panel" role="tabpanel" aria-labelledby="tab-pothos" tabindex="0">
+          <div class="care__photo">
+            <img id="care-photo" src="assets/pothos.jpg" alt="窗台上的一盆绿萝" width="1200" height="750">
+            <span class="care__badge">47 类植物库</span>
+            <span class="care__corner" aria-hidden="true">Care Card</span>
+          </div>
+          <div class="care__body" aria-live="polite">
+            <header class="care__head">
+              <div>
+                <p class="care__kicker">养护档案</p>
+                <h3 id="care-name">绿萝</h3>
+              </div>
+              <span class="care__ease" id="care-ease">难度 · 容易</span>
+            </header>
+
+            <p class="care__tip" id="care-tip">喜阴凉湿润，避免直射，保持土壤微湿。</p>
+            <ul class="care__tags" id="care-tags"><li>半阴</li><li>微湿</li><li>避免直射</li></ul>
+
+            <dl class="care__grid">
+              <div><dt><i data-icon="Sun" data-size="16"></i>光照</dt><dd id="care-light">半阴</dd></div>
+              <div><dt><i data-icon="Droplet" data-size="16"></i>水分</dt><dd id="care-water">微湿</dd></div>
+              <div><dt><i data-icon="Window" data-size="16"></i>位置</dt><dd id="care-place">避免直射</dd></div>
+              <div><dt><i data-icon="Clock" data-size="16"></i>下次浇水</dt><dd id="care-next">表土干了再浇</dd></div>
+            </dl>
+
+            <div class="care__warn">
+              <span class="care__warn-ico" data-icon="ShieldCheck" data-size="18"></span>
+              <p><b>常见死法</b><span id="care-warn">浇水太勤，盆土长期不干。</span></p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 新手推荐 -->
+  <section class="section finder" id="finder" aria-labelledby="finder-title">
+    <div class="shell finder__grid">
+      <div class="finder__copy reveal">
+        <p class="kicker">03 / 新手推荐</p>
+        <h2 id="finder-title">不知道养什么？<br>先回答三个问题。</h2>
+        <p>这是产品里“场景化推荐”的简化演示。正式版会问 5 个问题，还会把对猫狗有毒的品种排在你家之外。</p>
+
+        <ul class="finder__points">
+          <li><span data-icon="Check" data-size="16"></span>按光照、在家的时间、宠物情况来选</li>
+          <li><span data-icon="Check" data-size="16"></span>结果从真实的植物库里出，不是随机抽卡</li>
+          <li><span data-icon="Check" data-size="16"></span>先推荐“养不死榜单”，再谈好看</li>
+        </ul>
+      </div>
+
+      <div class="finder__app reveal" id="finder-app">
+        <div class="finder__bar">
+          <span><i data-icon="Sparkles" data-size="16"></i>养不死测试</span>
+          <span id="finder-step">1 / 3</span>
+        </div>
+        <div class="finder__progress"><i id="finder-progress"></i></div>
+
+        <div class="finder__step is-active" data-step="0">
+          <p class="finder__q">你家的光，大概是什么样？</p>
+          <button class="opt" type="button" data-value="bright"><span>窗边很亮，有直射</span><i data-icon="ArrowRight" data-size="16"></i></button>
+          <button class="opt" type="button" data-value="soft"><span>有散光，不直晒</span><i data-icon="ArrowRight" data-size="16"></i></button>
+          <button class="opt" type="button" data-value="low"><span>基本靠灯光</span><i data-icon="ArrowRight" data-size="16"></i></button>
+        </div>
+
+        <div class="finder__step" data-step="1" hidden>
+          <p class="finder__q">你多久在家一次？</p>
+          <button class="opt" type="button" data-value="often"><span>经常出差，一走好几天</span><i data-icon="ArrowRight" data-size="16"></i></button>
+          <button class="opt" type="button" data-value="sometimes"><span>周末在，平时早出晚归</span><i data-icon="ArrowRight" data-size="16"></i></button>
+          <button class="opt" type="button" data-value="home"><span>每天都在家</span><i data-icon="ArrowRight" data-size="16"></i></button>
+        </div>
+
+        <div class="finder__step" data-step="2" hidden>
+          <p class="finder__q">家里有猫或小孩吗？</p>
+          <button class="opt" type="button" data-value="yes"><span>有，得放得高一点</span><i data-icon="ArrowRight" data-size="16"></i></button>
+          <button class="opt" type="button" data-value="no"><span>没有</span><i data-icon="ArrowRight" data-size="16"></i></button>
+        </div>
+
+        <p class="finder__hint" id="finder-hint"><i data-icon="Clock" data-size="14"></i>三个问题，大约 20 秒；答完直接看到它的养护卡。</p>
+
+        <div class="finder__result" id="finder-result" hidden aria-live="polite">
+          <p class="finder__q">先从这一盆开始</p>
+          <div class="result-main">
+            <img id="result-img" src="assets/pothos.jpg" alt="" width="1200" height="750">
+            <div>
+              <span class="result__ease" id="result-ease">难度 · 容易</span>
+              <h3 id="result-name">绿萝</h3>
+              <p id="result-why">耐阴，土干了再浇，出差一周也扛得住。</p>
+            </div>
+          </div>
+          <ul class="result-tags" id="result-tags"><li>半阴</li><li>微湿</li><li>避免直射</li></ul>
+          <p class="result-note" id="result-note"></p>
+
+          <div class="result-alts" id="result-alts"></div>
+
+          <button class="btn btn--dark btn--full" id="finder-restart" type="button">重新选一次</button>
+          <p class="fine">演示结果基于产品里现有的新手推荐逻辑，正式版以 App 内 5 题结果为准。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 怎么用 -->
+  <section class="section how" id="how" aria-labelledby="how-title">
+    <div class="shell">
+      <div class="sec-head reveal">
+        <p class="kicker">04 / 怎么用</p>
+        <h2 id="how-title">从一张照片，<br>到一棵活的植物。</h2>
+        <p>四步，每一步都短。你不需要先学会养花，才能开始养花。</p>
+      </div>
+
+      <ol class="steps">
+        <li class="step reveal">
+          <span class="step__no">01</span>
+          <span class="step__ico" data-icon="Camera" data-size="22"></span>
+          <h3>拍一张</h3>
+          <p>整株一张，叶子一张。植物识别和病虫害识别两个模型同时看。</p>
+        </li>
+        <li class="step reveal">
+          <span class="step__no">02</span>
+          <span class="step__ico" data-icon="Leaf" data-size="22"></span>
+          <h3>建个档</h3>
+          <p>确认品种，起个名字，选放在南阳台、北卧室还是办公室。</p>
+        </li>
+        <li class="step reveal">
+          <span class="step__no">03</span>
+          <span class="step__ico" data-icon="Bell" data-size="22"></span>
+          <h3>到点提醒</h3>
+          <p>按位置校准浇水间隔。延期一次，下一次提醒会自动往后推。</p>
+        </li>
+        <li class="step reveal">
+          <span class="step__no">04</span>
+          <span class="step__ico" data-icon="ChartLine" data-size="22"></span>
+          <h3>看着它长</h3>
+          <p>每周一张同角度照片，高度和叶片数自己长成一条生命线。</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 能力 -->
+  <section class="section features" id="features" aria-labelledby="features-title">
+    <div class="shell">
+      <div class="sec-head reveal">
+        <p class="kicker">05 / 能力</p>
+        <h2 id="features-title">不止认得出，<br>还管得下去。</h2>
+        <p>识别是入口，提醒、诊断和记录才是每天都会用到的部分。</p>
+      </div>
+
+      <div class="bento">
+        <article class="feature feature--wide reveal">
+          <div class="feature__head">
+            <span class="feature__ico" data-icon="Bell" data-size="20"></span>
+            <span class="feature__tag">智能提醒</span>
+          </div>
+          <h3>提醒跟着你家的位置走</h3>
+          <p>南阳台和北卧室，浇水间隔不一样；延期一次，下一次提醒会自动往后推。</p>
+          <div class="mini-remind">
+            <div class="mini-remind__box">
+              <div class="mini-remind__row">
+                <span class="mini-remind__ico" data-icon="Droplet" data-size="15"></span>
+                <div><b>绿萝</b><small>今天 · 浇水</small></div>
+                <em>已完成</em>
+              </div>
+              <div class="mini-remind__row">
+                <span class="mini-remind__ico mini-remind__ico--sand" data-icon="Sun" data-size="15"></span>
+                <div><b>虎皮兰</b><small>3 天后 · 施肥</small></div>
+                <em class="is-ghost">延期</em>
+              </div>
+              <div class="mini-remind__row">
+                <span class="mini-remind__ico mini-remind__ico--gray" data-icon="Calendar" data-size="15"></span>
+                <div><b>白掌</b><small>10 月 12 日 · 换盆</small></div>
+                <em class="is-ghost">延期</em>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="feature reveal">
+          <div class="feature__head">
+            <span class="feature__ico feature__ico--coral" data-icon="Stethoscope" data-size="20"></span>
+            <span class="feature__tag">病症诊断</span>
+          </div>
+          <h3>叶子黄了，先拍给 AI 看</h3>
+          <p>黄叶、斑点、萎蔫先给预诊；拿不准，再发到社区急诊室，让老花友接一手。</p>
+        </article>
+
+        <article class="feature reveal">
+          <div class="feature__head">
+            <span class="feature__ico feature__ico--sand" data-icon="Bug" data-size="20"></span>
+            <span class="feature__tag">双模型</span>
+          </div>
+          <h3>植物和病虫害，一张图两个结果</h3>
+          <p>植物识别覆盖 47 类室内植物、花卉和蔬菜；病虫害模型单独看昆虫、病害和生理性障碍。</p>
+        </article>
+
+        <article class="feature reveal">
+          <div class="feature__head">
+            <span class="feature__ico" data-icon="MessageQuestion" data-size="20"></span>
+            <span class="feature__tag">AI 植物医生</span>
+          </div>
+          <h3>能接着往下聊</h3>
+          <p>不只是给一个结论。问它“那现在要不要换盆”，它接着答。</p>
+          <div class="mini-chat">
+            <p class="mini-chat__in">叶尖发黄，是不是水多了？</p>
+            <p class="mini-chat__out">先摸一下土。湿的就停水，等干透再浇。</p>
+          </div>
+        </article>
+
+        <article class="feature reveal">
+          <div class="feature__head">
+            <span class="feature__ico feature__ico--coral" data-icon="ChartLine" data-size="20"></span>
+            <span class="feature__tag">养花日记</span>
+          </div>
+          <h3>它的成长，有一条生命线</h3>
+          <p>每周一张同角度照片，高度和叶片数自己长成曲线。翻回去看，比记忆可靠。</p>
+          <svg class="mini-chart" viewBox="0 0 240 64" role="img" aria-label="生长曲线示意：高度从 24 厘米长到 32 厘米">
+            <path d="M8 52 L48 48 L88 42 L128 34 L168 26 L208 18 L232 13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="8" cy="52" r="3.5" fill="currentColor"/>
+            <circle cx="88" cy="42" r="3.5" fill="currentColor"/>
+            <circle cx="168" cy="26" r="3.5" fill="currentColor"/>
+            <circle cx="232" cy="13" r="3.5" fill="currentColor"/>
+          </svg>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 规格 -->
+  <section class="spec" id="spec" aria-labelledby="spec-title">
+    <div class="shell">
+      <div class="spec__grid">
+        <div class="spec__head reveal">
+          <p class="kicker">06 / 产品规格</p>
+          <h2 id="spec-title">不猜，<br>按数据来。</h2>
+          <p>下面这些数字，都写在产品里，不是宣传口径。</p>
+        </div>
+        <div class="stat reveal"><b>47</b><span>类室内植物、花卉、蔬菜</span></div>
+        <div class="stat reveal"><b>2</b><span>个 YOLOv11 模型：植物与病虫害</span></div>
+        <div class="stat reveal"><b>4</b><span>类提醒：浇水、施肥、换盆、修剪</span></div>
+        <div class="stat reveal"><b>5</b><span>个问题，生成新手推荐</span></div>
+        <div class="stat reveal"><b>1</b><span>条生命线：高度与叶片数</span></div>
+        <div class="stat reveal"><b>ONNX</b><span>服务器端与边缘端都能跑</span></div>
+      </div>
+      <p class="spec__note reveal">数字来自项目 README 与 App 现有功能。识别模型以 ONNX 部署；拍照识别与 AI 对话需要网络。</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section faq-sec" id="faq" aria-labelledby="faq-title">
+    <div class="shell faq__grid">
+      <div class="faq__head reveal">
+        <p class="kicker">07 / 常见问题</p>
+        <h2 id="faq-title">你可能<br>还想知道。</h2>
+        <p>没写到的，发邮件问我们。内测期间回得慢一点，但都会回。</p>
+      </div>
+
+      <div class="faq reveal">
+        <details open>
+          <summary><span>它真的能认出我的花吗？</span><span class="faq__plus" aria-hidden="true"></span></summary>
+          <div class="faq__body"><p>植物识别模型覆盖 47 类常见室内植物、花卉和蔬菜。月季和玫瑰这类难分的品种，会给出对比图让你二次确认；实在拿不准，就发到社区急诊室。</p></div>
+        </details>
+        <details>
+          <summary><span>经常出差，提醒会不会全乱？</span><span class="faq__plus" aria-hidden="true"></span></summary>
+          <div class="faq__body"><p>添加植物时先选摆放位置，系统按南阳台、北卧室、办公室校准浇水频率。提醒可以延期，延期记录会被学进下一次提醒，而不是永远按第一次的节奏催你。</p></div>
+        </details>
+        <details>
+          <summary><span>叶子黄了，它能看出原因吗？</span><span class="faq__plus" aria-hidden="true"></span></summary>
+          <div class="faq__body"><p>病虫害模型识别昆虫、病害和生理性障碍，AI 先给初步预诊，比如缺铁、晒伤或浇水过多。诊断页会同时列出可能原因和处理建议，严重的再转人工。</p></div>
+        </details>
+        <details>
+          <summary><span>家里有猫，推荐会避开有毒植物吗？</span><span class="faq__plus" aria-hidden="true"></span></summary>
+          <div class="faq__body"><p>会。新手推荐先问家里有没有小孩或宠物，把海芋、铃兰这类在植物库里标注“有毒”的品种排除掉，再给“养不死榜单”。页面上的演示也保留了这个提醒。</p></div>
+        </details>
+        <details>
+          <summary><span>需要一直联网吗？</span><span class="faq__plus" aria-hidden="true"></span></summary>
+          <div class="faq__body"><p>识别模型以 ONNX 部署，可以跑在服务器，也可以放到边缘设备上；拍照识别和 AI 对话本身需要网络。植物档案、提醒和日记存在账号里，换手机不会丢。</p></div>
+        </details>
+        <details>
+          <summary><span>现在能下载吗？</span><span class="faq__plus" aria-hidden="true"></span></summary>
+          <div class="faq__body"><p>App 还在内测，iOS 和 Android 都在打包。在下面留一个植物名字和摆放位置，我们把安装包和这张养护卡发到你的邮箱。</p></div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 内测 -->
+  <section class="cta" id="beta" aria-labelledby="beta-title">
+    <div class="shell cta__grid">
+      <div class="cta__copy reveal">
+        <p class="kicker kicker--dark">08 / 内测申请</p>
+        <h2 id="beta-title">从第一盆开始，<br>建一份看得懂的档案。</h2>
+        <p>填一个植物名字，选一个摆放位置。我们把内测安装包和它的养护卡一起发给你。</p>
+        <ul class="cta__list">
+          <li><span data-icon="Check" data-size="16"></span>iOS / Android 内测安装包</li>
+          <li><span data-icon="Check" data-size="16"></span>按位置校准的浇水提醒</li>
+          <li><span data-icon="Check" data-size="16"></span>一张属于这盆花的养护卡</li>
+        </ul>
+      </div>
+
+      <form class="setup reveal" id="setup-form">
+        <div class="setup__head">
+          <span class="setup__mark" data-icon="Leaf" data-size="18"></span>
+          <div><b>给你的第一盆建档</b><small>两个问题，十秒钟</small></div>
+        </div>
+
+        <label class="field">
+          <span>它叫什么</span>
+          <input id="plant-nickname" name="nickname" type="text" value="窗台上的绿萝" maxlength="24" autocomplete="off">
+        </label>
+
+        <fieldset class="field">
+          <legend>放在哪里</legend>
+          <div class="seg">
+            <label><input type="radio" name="place" value="南阳台" checked><span>南阳台</span></label>
+            <label><input type="radio" name="place" value="北卧室"><span>北卧室</span></label>
+            <label><input type="radio" name="place" value="办公室"><span>办公室</span></label>
+          </div>
+        </fieldset>
+
+        <label class="field">
+          <span>想装哪个系统</span>
+          <select id="plant-os" name="os">
+            <option>iOS</option>
+            <option>Android</option>
+            <option>都行</option>
+          </select>
+        </label>
+
+        <button class="btn btn--dark btn--full" id="beta-submit" type="button"><span class="btn__text">复制申请内容</span><span class="btn__check" data-icon="Check" data-size="17"></span></button>
+        <p class="setup__note" id="beta-note">点一下复制申请内容，粘到邮件或聊天窗口发给我们即可。</p>
+        <p class="sr-only" id="beta-status" role="status" aria-live="polite"></p>
+      </form>
+    </div>
+    <div class="cta__blend" aria-hidden="true"></div>
+  </section>
+
+</main>
+
+<footer class="foot" aria-labelledby="foot-name">
+  <div class="shell">
+    <div class="foot__top">
+      <div class="foot__brand">
+        <a class="brand brand--foot" href="#top">
+          <img class="brand__mark" src="assets/logo.png" alt="" width="40" height="40" decoding="async">
+          <span class="brand__text"><b id="foot-name">护花使者</b><small>FLOWER GUARDIAN</small></span>
+        </a>
+        <p>你的掌上植物管家，<br>让养花不再凭感觉。</p>
+      </div>
+
+      <div class="foot__nav">
+        <div>
+          <p>产品</p>
+          <a href="#card">养护卡</a>
+          <a href="#finder">新手推荐</a>
+          <a href="#features">智能提醒</a>
+          <a href="#features">病害诊断</a>
+        </div>
+        <div>
+          <p>了解</p>
+          <a href="#spec">技术规格</a>
+          <a href="#faq">常见问题</a>
+          <a href="#beta">内测申请</a>
+        </div>
+        <div>
+          <p>更多</p>
+          <a href="#why">设计原则</a>
+          <a href="#how">使用流程</a>
+          <a href="admin/">运营后台</a>
+          <a href="#top">回到顶部</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot__bottom">
+      <div>
+        <p>护花使者 Flower Guardian · 内测版官网 · 2026</p>
+        <p class="foot__credits">
+          图片：Wikimedia Commons，
+          <a href="https://commons.wikimedia.org/wiki/File%3APotted_Aloe_vera_plant.jpg" target="_blank" rel="noopener">芦荟 © Arjun01（公有领域）</a>
+          <a href="https://commons.wikimedia.org/wiki/File%3ASansevieria_trifasciata_12zz.jpg" target="_blank" rel="noopener">虎皮兰 © David J. Stang（CC BY-SA 4.0）</a>
+          <a href="https://commons.wikimedia.org/wiki/File%3AEpipremnum_aureum_%28Marble_Queen%29_houseplant_%28cropped%29.png" target="_blank" rel="noopener">绿萝 © Spnq（CC BY-SA 4.0）</a>
+          <a href="https://commons.wikimedia.org/wiki/File%3AHedera_helix_leaf.jpg" target="_blank" rel="noopener">常春藤 © Max Ronnersjö（CC BY-SA 3.0）</a>
+          <a href="https://commons.wikimedia.org/wiki/File%3AMonstera_deliciosa_4.jpg" target="_blank" rel="noopener">龟背竹 © Cryptosporella（CC BY-SA 3.0）</a>
+          <a href="https://commons.wikimedia.org/wiki/File%3APeace_lily_-_2.jpg" target="_blank" rel="noopener">白掌 © W.carter（CC BY-SA 4.0）</a>
+          图标：<a href="https://reicon.dev" target="_blank" rel="noopener">Reicon</a>（MIT）。
+        </p>
+      </div>
+      <a class="foot__top-link" href="#top">回到顶部 <span data-icon="ArrowUpRight" data-size="16"></span></a>
+    </div>
+  </div>
+</footer>
+
+<script src="assets/icons.js"></script>
+<script src="assets/app.js"></script>
+</body>
+</html>
