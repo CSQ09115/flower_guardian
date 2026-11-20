@@ -1,17 +1,24 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
+  CARE_LEVEL,
   clamp,
+  clockOnly,
   compactMoney,
   dateTime,
   dayKey,
+  debounce,
+  DELIVERY_TYPE,
   esc,
   money,
   num,
+  ORDER_STATUS,
   pad,
   pct,
+  PRODUCT_STATUS,
   relative,
   seeded,
   sum,
+  timeOnly,
   toCsv,
   DEVICE_STATE,
   STATUS_LABEL,
@@ -133,5 +140,49 @@ describe("labels", () => {
       offline: { label: "离线", tone: "plain" },
       alarm: { label: "告警", tone: "danger" },
     });
+  });
+
+  it("keeps the legacy badge tones and lookup tables", () => {
+    expect(ORDER_STATUS).toEqual({
+      pending: { label: "待确认", tone: "rose" },
+      confirmed: { label: "已确认", tone: "info" },
+      shipped: { label: "已发货", tone: "mist" },
+      completed: { label: "已完成", tone: "done" },
+      cancelled: { label: "已取消", tone: "stone" },
+    });
+    expect(DELIVERY_TYPE).toEqual({ express: "快递配送", pickup: "到店自提" });
+    expect(PRODUCT_STATUS).toEqual({
+      active: { label: "在售", tone: "ok" },
+      inactive: { label: "已下架", tone: "plain" },
+    });
+    expect(CARE_LEVEL[1].label).toBe("省心");
+    expect(CARE_LEVEL[2].label).toBe("一般");
+    expect(CARE_LEVEL[3].label).toBe("费心");
+  });
+});
+
+describe("timeOnly / clockOnly / debounce", () => {
+  it("formats chart and clock labels", () => {
+    const at = new Date(2026, 10, 20, 9, 5, 7);
+    expect(timeOnly(at)).toBe("09:05");
+    expect(clockOnly(at)).toBe("09:05:07");
+    expect(timeOnly("2026-11-20T01:05:00.000Z")).toBe(timeOnly(new Date("2026-11-20T01:05:00.000Z")));
+  });
+
+  it("debounces calls like the legacy helper", async () => {
+    vi.useFakeTimers();
+    try {
+      const spy = vi.fn();
+      const wrapped = debounce(spy, 220);
+      wrapped("a");
+      wrapped("b");
+      vi.advanceTimersByTime(219);
+      expect(spy).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(1);
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(spy).toHaveBeenCalledWith("b");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

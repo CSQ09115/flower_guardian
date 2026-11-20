@@ -65,6 +65,18 @@ export const dateTime = (value: string | number | Date): string => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
+/* 图表轴用的纯时刻（legacy `timeOnly`）。 */
+export const timeOnly = (value: string | number | Date): string => {
+  const d = value instanceof Date ? value : new Date(value);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
+/* 秒级时刻（legacy `clockOnly`，设备详情用）。 */
+export const clockOnly = (value: string | number | Date): string => {
+  const d = value instanceof Date ? value : new Date(value);
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
 export const relative = (value: string | number | Date, now: number = Date.now()): string => {
   if (!value) return "—";
   const diff = Math.max(0, now - new Date(value).getTime());
@@ -103,6 +115,18 @@ export const seeded = (seed: number): (() => number) => {
   };
 };
 
+/* 输入防抖（legacy `debounce`，默认 220ms）。 */
+export const debounce = <Args extends unknown[]>(
+  fn: (...args: Args) => void,
+  wait = 220,
+): ((...args: Args) => void) => {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return (...args: Args) => {
+    if (timer !== undefined) clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), wait);
+  };
+};
+
 /* 订单状态文案（legacy `ORDER_STATUS` 的 label 部分）。 */
 export const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "待确认",
@@ -110,6 +134,34 @@ export const STATUS_LABEL: Record<OrderStatus, string> = {
   shipped: "已发货",
   completed: "已完成",
   cancelled: "已取消",
+};
+
+/* 订单状态的文案 + 徽标色调（legacy `ORDER_STATUS` 原表）。 */
+export const ORDER_STATUS: Record<OrderStatus, { label: string; tone: string }> = {
+  pending: { label: "待确认", tone: "rose" },
+  confirmed: { label: "已确认", tone: "info" },
+  shipped: { label: "已发货", tone: "mist" },
+  completed: { label: "已完成", tone: "done" },
+  cancelled: { label: "已取消", tone: "stone" },
+};
+
+/* 配送方式文案（legacy `DELIVERY_TYPE`）。 */
+export const DELIVERY_TYPE: Record<string, string> = {
+  express: "快递配送",
+  pickup: "到店自提",
+};
+
+/* 商品状态（legacy `PRODUCT_STATUS`）。 */
+export const PRODUCT_STATUS: Record<string, { label: string; tone: string }> = {
+  active: { label: "在售", tone: "ok" },
+  inactive: { label: "已下架", tone: "plain" },
+};
+
+/* 养护难度（legacy `CARE_LEVEL`，键为 1-3）。 */
+export const CARE_LEVEL: Record<number, { label: string; tone: string }> = {
+  1: { label: "省心", tone: "ok" },
+  2: { label: "一般", tone: "info" },
+  3: { label: "费心", tone: "warn" },
 };
 
 /* 设备在线状态（legacy `DEVICE_STATE`，含徽标色调）。 */
