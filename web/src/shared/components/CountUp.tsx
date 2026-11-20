@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { usePrefersReducedMotion } from "../hooks/usePrefersReducedMotion";
 
-export type CountUpFormat = "int" | "money" | "float";
+export type CountUpFormat = "int" | "money" | "float" | "compact";
 
 /**
  * Port of `animateNumbers()` (legacy `admin/assets/js/ui.js`).
@@ -18,9 +18,17 @@ export type CountUpFormat = "int" | "money" | "float";
  * - `float` — no legacy `data-count-format` used this; KPIs only shipped int and
  *   money. One fraction digit is the smallest rule that keeps sub-unit figures
  *   (e.g. averages) meaningful without borrowing a second rounding policy.
+ * - `compact` — same as `compactMoney()`: millions as `M` with two decimals,
+ *   ten-thousands as 万 with one decimal, otherwise `money`.
  */
 function formatValue(value: number, format: CountUpFormat): string {
   const safe = Number.isFinite(value) ? value : 0;
+  if (format === "compact") {
+    const abs = Math.abs(safe);
+    if (abs >= 1_000_000) return "¥" + (safe / 1_000_000).toFixed(2) + "M";
+    if (abs >= 10_000) return "¥" + (safe / 10_000).toFixed(1) + "万";
+    return "¥" + safe.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
   if (format === "money") {
     return "¥" + safe.toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
@@ -32,7 +40,7 @@ function formatValue(value: number, format: CountUpFormat): string {
 
 export function CountUp(props: {
   value: number;
-  format?: "int" | "money" | "float";
+  format?: CountUpFormat;
   prefix?: string;
   suffix?: string;
   className?: string;

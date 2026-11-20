@@ -11,6 +11,8 @@ export type ModalProps = {
   children: React.ReactNode;
   footer?: React.ReactNode;
   labelledBy?: string;
+  subtitle?: string;
+  wide?: boolean;
 };
 
 /**
@@ -23,7 +25,7 @@ export type ModalProps = {
  * `document.body` otherwise; host lookup and focus work happen in effects only,
  * so importing this module during the site prerender never touches the DOM.
  */
-export function Modal({ open, title, onClose, children, footer, labelledBy }: ModalProps): JSX.Element | null {
+export function Modal({ open, title, onClose, children, footer, labelledBy, subtitle, wide }: ModalProps): JSX.Element | null {
   const rawId = useId();
   const titleId = `modal-title-${rawId.replace(/[^a-zA-Z0-9_-]/g, "")}`;
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -65,7 +67,7 @@ export function Modal({ open, title, onClose, children, footer, labelledBy }: Mo
     >
       <div
         ref={dialogRef}
-        className={`modal ${styles.dialog}`}
+        className={`modal${wide ? " modal--wide" : ""} ${styles.dialog}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy ?? titleId}
@@ -74,6 +76,7 @@ export function Modal({ open, title, onClose, children, footer, labelledBy }: Mo
         <div className="modal__head">
           <div>
             <h2 id={titleId}>{title}</h2>
+            {subtitle ? <p>{subtitle}</p> : null}
           </div>
           <button type="button" className="icon-btn modal__close" aria-label="关闭" onClick={onClose}>
             <AdminIcon name="close" />

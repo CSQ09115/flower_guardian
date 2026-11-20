@@ -17,13 +17,20 @@ export function Field(props: {
   required?: boolean;
   hint?: string;
   disabled?: boolean;
+  min?: number;
+  max?: number;
+  step?: number;
+  icon?: React.ReactNode;
 }): JSX.Element {
-  const { label, name, value, onChange, type, placeholder, required, hint, disabled } = props;
+  const { label, name, value, onChange, type, placeholder, required, hint, disabled, min, max, step, icon } = props;
   const id = "f-" + name;
 
   return (
     <div className="field">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>
+        {icon}
+        {label}
+      </label>
       <input
         className="input"
         id={id}
@@ -33,6 +40,9 @@ export function Field(props: {
         placeholder={placeholder}
         required={required}
         disabled={disabled}
+        min={min}
+        max={max}
+        step={step}
         onChange={(event) => onChange(event.target.value)}
       />
       {hint ? <div className="field__hint">{hint}</div> : null}
