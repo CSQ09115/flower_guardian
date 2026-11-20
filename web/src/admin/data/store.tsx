@@ -164,10 +164,10 @@ export function applySaveProduct(data: AdminData, payload: ProductInput, id?: nu
     id: next,
     created_at: stamp,
     updated_at: stamp,
+    ...payload,
     // The legacy demo row simply had no `image_url`; `null` is the same value
     // the live API returns for a product without a picture.
-    image_url: null,
-    ...payload,
+    image_url: payload.image_url ?? null,
   };
   return { ...data, products: [row, ...data.products] };
 }

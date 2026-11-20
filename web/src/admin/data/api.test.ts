@@ -165,6 +165,7 @@ describe("authenticated requests", () => {
       stock: 42,
       plant_id: 1,
       status: "active",
+      image_url: null,
     });
 
     const [url, init] = fetchStub.mock.calls[0] as [string, RequestInit];

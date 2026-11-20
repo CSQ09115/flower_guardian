@@ -152,7 +152,11 @@ export type AdminData = {
   alerts: Alert[];
 };
 
-export type ProductInput = Pick<Product, "name" | "description" | "price" | "stock" | "plant_id" | "status">;
+/* The legacy product form also sends `image_url`, so the input type keeps it. */
+export type ProductInput = Pick<
+  Product,
+  "name" | "description" | "price" | "stock" | "plant_id" | "status" | "image_url"
+>;
 
 export type PlantInput = Partial<Omit<Plant, "id" | "created_at">> & { name: string };
 

@@ -24,6 +24,7 @@ const productPayload = {
   stock: 42,
   plant_id: 1,
   status: "active" as const,
+  image_url: null,
 };
 
 describe("demo write operations", () => {
