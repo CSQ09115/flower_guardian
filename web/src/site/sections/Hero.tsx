@@ -77,7 +77,7 @@ export function Hero(): JSX.Element {
               </div>
 
               <div className="app-plant">
-                <img src="/assets/pothos.jpg" alt="" width="1200" height="750" fetchPriority="high" />
+                <img src="/assets/pothos.jpg" alt="" width="1200" height="750" {...{ fetchpriority: "high" }} />
                 <span className="app-plant__tag">今天浇水</span>
                 <div className="app-plant__text">
                   <strong>窗台上的绿萝</strong>
