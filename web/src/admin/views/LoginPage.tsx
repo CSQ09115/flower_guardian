@@ -5,7 +5,6 @@ import { apiBase, login, setApiBase, setToken } from "../data/api";
 import { useAdminData } from "../data/store";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { LoginShell } from "../layout/LoginShell";
-import { Field } from "../../shared/components/Field";
 
 /**
  * Login screen, ported from `legacy/admin/assets/js/views/login.js`: the same
@@ -91,25 +90,39 @@ export function LoginPage(): JSX.Element {
           </p>
 
           <form id="login-form" noValidate onSubmit={(event) => void submit(event)}>
-            <Field
-              label="管理员账号"
-              name="login-user"
-              value={username}
-              onChange={setUsername}
-              icon={<AdminIcon name="user" size={13} />}
-              placeholder="用户名"
-              required
-            />
-            <Field
-              label="密码"
-              name="login-pass"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              icon={<AdminIcon name="lock" size={13} />}
-              placeholder="密码"
-              required
-            />
+            <div className="field">
+              <label htmlFor="login-user">
+                <AdminIcon name="user" size={13} />
+                管理员账号
+              </label>
+              <input
+                className="input"
+                id="login-user"
+                name="username"
+                autoComplete="username"
+                required
+                placeholder="用户名"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="login-pass">
+                <AdminIcon name="lock" size={13} />
+                密码
+              </label>
+              <input
+                className="input"
+                id="login-pass"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                placeholder="密码"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+              />
+            </div>
             {error ? (
               <div
                 id="login-error"
