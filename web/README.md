@@ -1,44 +1,113 @@
 # 护花使者 · 官网与运营后台
 
-`web/` 目录存放两套纯静态前端，共用一个色调与字体体系，没有构建步骤、没有框架依赖：
+`web/` 是 Vite + React 18 + TypeScript 的静态站点，两个独立入口共用一个仓库：
 
-- `index.html` + `assets/` —— 官网产品介绍页；
-- `admin/` —— 运营后台（花盆设备、告警、商品、订单、用户、植物库、数据统计）。
+- `/` —— 产品介绍页，构建时把首屏预渲染进 `dist/index.html`，加载后 hydrate；
+- `/admin/` —— 运营后台（hash 路由单页应用），默认使用内置演示数据。
+
+没有 Next.js、没有 Tailwind、没有图表库：样式是原生 CSS，图表是手写 SVG，路由用 `react-router-dom` 6。
 
 ## 本地运行
 
-在 `web/` 目录起一个静态服务器即可（`file://` 打开会因为 ES 模块的跨域策略失效）：
+要求 Node 20+。如果 `node` / `npm` 不在 PATH（macOS Homebrew 默认在 `/opt/homebrew/bin`），先执行：
+
+```bash
+export PATH=/opt/homebrew/bin:$PATH
+```
 
 ```bash
 cd web
+npm install
+
+npm run dev        # 开发服务器，http://127.0.0.1:4177/
+npm run build      # tsc + vite build + 预渲染 dist/index.html
+npm run preview    # 预览构建产物，http://127.0.0.1:4177/
+npm run typecheck  # 两个 tsconfig 都检查
+npm test           # Vitest 单元测试
+npm run qa         # Playwright + axe 回归（会先 build，再占用 4177）
+```
+
+首次跑 QA 前安装浏览器：`npx playwright install chromium`。`npm run qa` 会探测 4177；如果开发服务器或旧的 preview 还占着端口，先停掉再跑，避免测到旧构建。
+
+## 页面与渲染方式
+
+| 入口 | 文件 | 渲染 |
+| --- | --- | --- |
+| 官网 | `index.html` → `src/site/main.tsx` | `scripts/prerender.mjs` 在构建末尾调用 `src/site/entry-server.tsx`，把 `renderToString(<SiteApp />)` 写进 `dist/index.html`；浏览器端检测 `#root` 已有内容就 `hydrateRoot`，否则 `createRoot`（开发服务器走后者） |
+| 后台 | `admin/index.html` → `src/admin/main.tsx` | 纯客户端渲染，hash 路由，不预渲染 |
+
+- 官网在 `<html>` 上保留 `no-js` 类与一段内联脚本：无 JS 时预渲染内容直接可读；有 JS 时加 `js` 类启用滚动入场；带 `?snap` 时跳过隐藏，便于截图和对照。
+- 样式只在各自的 `main.tsx` 里 import，服务端入口不引 CSS。
+- 后台的 `dist/admin/index.html` 始终是空 `#root`。
+
+## 目录结构
+
+```
+web/
+├── index.html                官网入口（含预渲染占位与 no-js 脚本）
+├── admin/index.html          后台入口
+├── public/assets/            图片、favicon、触摸图标等静态资源
+├── scripts/prerender.mjs     把官网首屏写进 dist/index.html
+├── src/
+│   ├── site/                 官网
+│   │   ├── App.tsx           11 个 section 的装配
+│   │   ├── sections/         Nav / Hero / Intro / CareCard / Finder / How …
+│   │   ├── hooks/            导航、养护卡、finder、复制、滚动入场
+│   │   ├── data/             养护卡、finder 评分、FAQ、能力、规格
+│   │   ├── icons.tsx         Reicon 内联 SVG
+│   │   └── styles/site.css
+│   └── admin/                运营后台
+│       ├── layout/           外壳、侧栏、顶栏、登录壳
+│       ├── views/            10 条路由的页面
+│       ├── ui/               共享表单、KPI、空状态等
+│       ├── charts/           手写 SVG 折线、柱状、圆环、排行、热力图
+│       ├── data/             类型、演示数据、selector、接口客户端、Provider
+│       └── styles/admin.css
+├── qa/                       Playwright + axe 回归脚本
+├── vite.config.ts            双入口、端口 4177、base "/"
+└── README.md
+```
+
+## 静态部署
+
+`npm run build` 产出 `dist/`，交给任意静态服务器即可，不需要 Node 运行时：
+
+```bash
+cd web
+npm run build
+cd dist
 python3 -m http.server 4177 --bind 127.0.0.1
 ```
 
 - 官网：<http://127.0.0.1:4177/>
 - 后台：<http://127.0.0.1:4177/admin/>
+- 后台用 hash 路由，刷新 `#/devices/FG-ESP32-001` 不会 404，不需要额外 rewrite。
+- `dist/` 里包含预渲染后的 `index.html`，禁用 JavaScript 也能读到官网正文。
 
 ## 后台的两种数据源
 
-后台是单页应用（hash 路由），启动后默认进入**演示数据**模式：
+后台默认进入**演示数据**模式：
 
 | 模式 | 进入方式 | 说明 |
 | --- | --- | --- |
 | 演示数据 | 直接打开 `/admin/` | 内置一套标注为「演示数据」的样例，不请求网络，可完整走通所有页面与交互 |
-| 实时接口 | `/admin/#/login` 登录，或点侧栏底部「连接后端」 | 用管理员账号读取真实 FastAPI 接口 |
+| 实时接口 | `/admin/#/login` 登录，或点侧栏底部「连接后端」 | 用 `role=admin` 账号读取真实 FastAPI 接口 |
 
 - 接口地址默认 `http://localhost:8000`，可用 `?api=` 覆盖，例如 `http://127.0.0.1:4177/admin/?api=http://192.168.1.10:8000#/login`；
 - 地址与令牌分别存在 `localStorage` 的 `fg_api_base` 和 `fg_admin_token`；
 - 演示模式下所有写操作只改内存 + 本地样例，不会发出请求；右上角数据源标签始终显示当前是「演示数据」还是「实时接口」；
-- 实时模式登录失败（后端未启动、账号密码不对）会给出错误提示，不会静默退回演示数据。
+- 实时模式登录失败（后端未启动、账号密码不对）会给出错误提示，不会静默退回演示数据；
+- 带 token 刷新页面时仍显示「实时接口」，数据先回到演示值，点刷新后再拉取；token 失效后刷新会回到演示模式。
 
 ### 演示数据口径
 
 演示数据是**样例**，不是真实经营数据，任何对外材料都不要引用：
 
-- 6 台设备 `FG-ESP32-001` … `FG-ESP32-006`，与固件 `DEVICE_CODE` 编码一致；4 台在线、2 台离线；
+- 6 台设备 `FG-ESP32-001` … `FG-ESP32-006`，4 台在线、2 台离线；
 - 概览销售额 ¥2,333.70 / 21 单 / 客单价 ¥111.13 / 新增用户 8；
 - 订单页有效销售额 ¥2,031.70（扣掉已取消订单）；
-- 5 条待处理告警。
+- 7 条告警，其中 5 条待处理；
+- 商品 12 条、植物 10 条、用户 8 位。
 
 土壤温度按固件说明取模拟值，光照允许为空（未接 BH1750 时无读数），页面用「无读数」占位而不是 0。
 
@@ -68,7 +137,7 @@ POST /api/devices/{code}/readings
 
 ### 阈值与告警口径
 
-前后端是同一套判定逻辑，改一端要同步另一端（`admin/assets/js/store.js` 与 `backend/app/api/endpoints/devices.py`）：
+前后端是同一套判定逻辑，改一端要同步另一端（`src/admin/data/` 与 `backend/app/api/endpoints/devices.py`）：
 
 - 湿度、土壤温度：越过下限或上限即告警；
 - 光照：只在 06:00–20:00 判定，夜间（20:00–06:00）低于下限不告警，页面上显示「夜间不判定」，避免关灯后误报；
@@ -85,63 +154,59 @@ POST /api/devices/{code}/readings
 
 默认空气值 3200、水中值 1300。
 
-## 后台图表与动效
+## 图表与动效
 
-图表全部是手写 SVG（`admin/assets/js/charts.js`），没有图表库、没有构建步骤。数据写在视图里，图表只负责画。
+图表全部是手写 SVG React 组件（`src/admin/charts/`），没有图表库。数据由 `AdminDataProvider` + `useAdminData` 提供，图表只负责画。
 
 | 组件 | 用在哪 |
 | --- | --- |
-| `chart()` | 概览/统计的销售趋势（渐变面积 + 7 日均线虚线与悬停提示）、设备详情的 24 小时读数 |
-| `sparkline()` | KPI 卡片、设备卡片的 24 小时湿度曲线 |
-| `barChart()` | 统计页的下单时段分布、每日订单数 |
-| `donutChart()` | 订单状态构成（中心写总数，图例带数值与占比） |
-| `hbarChart()` | 商品销量排行（带金额与合计行） |
-| `ringGauge()` | 概览的设备在线率 |
-| `heatmapChart()` | 花盆设备的土壤湿度分布（每设备 24 小时、2 小时一桶） |
+| 折线图 | 概览/统计的销售趋势（渐变面积 + 7 日均线虚线与悬停提示）、设备详情的 24 小时读数 |
+| 迷你折线 | KPI 卡片、设备卡片的 24 小时湿度曲线 |
+| 柱状图 | 统计页的下单时段分布、每日订单数 |
+| 圆环图 | 订单状态构成（中心写总数，图例带数值与占比） |
+| 排行条 | 商品销量排行（带金额与合计行） |
+| 仪表环 | 概览的设备在线率 |
+| 热力图 | 花盆设备的土壤湿度分布（每设备 24 小时、2 小时一桶） |
 
-图表用「薄荷白 + 叶绿 + 玫瑰粉」的一组色：深叶绿 `#2c7a56`、玫瑰 `#d95f82`、中绿 `#3fa274`、浅粉 `#ef8fa8`、薄荷 `#bfe3cd`、灰绿 `#93a89c`，对应 CSS 变量 `--viz-1..6`。默认深叶绿画金额，玫瑰留给对比线与峰值（均线、最高单日、销冠、标题短线），中绿、浅粉与薄荷只做分类；设备湿度热力图的色阶是干（浅粉）→ 薄荷 → 湿（深绿）。状态色由 `STATUS_COLOR` 统一映射（待确认=浅粉、已确认=薄荷、已发货=中绿、已完成=深绿、已取消=灰绿），徽标与图例使用同一套语义。
+图表用「薄荷白 + 叶绿 + 玫瑰粉」的一组色：深叶绿 `#2c7a56`、玫瑰 `#d95f82`、中绿 `#3fa274`、浅粉 `#ef8fa8`、薄荷 `#bfe3cd`、灰绿 `#93a89c`，对应 CSS 变量 `--viz-1..6`。状态色由 `STATUS_COLOR` 统一映射，徽标与图例使用同一套语义。
 
-界面骨架用参考稿的薄荷白：底色 `#f3f8f2`、卡片纯白 `#ffffff`，侧栏也是白底加 `#e2ece1` 细描边，导航激活项是薄荷 pill（`#e4f3ea` 底 + `#2c7a56` 文字）。内容区左上角留一层很淡的玫瑰光晕、右下角一层叶绿光晕；页标题下方有一条 36px 的玫瑰短线，KPI 图标按「金额=玫瑰、数量=薄荷、价格/警示=浅粉」着色，表格行在悬停时转成极浅的粉白。
+后台沿用参考稿的薄荷白：底色 `#f3f8f2`、卡片纯白 `#ffffff`，侧栏白底加 `#e2ece1` 细描边，导航激活项是薄荷 pill。界面按「材质」分层：`--elev-1/2/3` 三档高度、卡片 `--hairline` 描边、顶栏半透明 `blur` 材质；`prefers-reduced-transparency` 下退回实色，`prefers-contrast: more` 下描边与次要文字加深。
 
-界面按「材质」分层，而不是给所有面板同一层阴影：`--elev-1/2/3` 三档高度分别对应静置卡片、悬停与弹窗；卡片用纯白纸面加一层绿调的 `--hairline` 描边，顶栏是 `--chrome`（半透明 + `blur(20px) saturate(180%)`）材质，内容从下方穿过，接缝用 16px 渐隐代替 1px 分割线。手机端抽屉打开时补了一层 `.scrim` 遮罩，点遮罩可关闭，关闭时不进入 Tab 顺序；抽屉打开期间背景设为 `inert`、焦点移入当前导航项，关闭或按 Esc 后焦点回到菜单按钮。`prefers-reduced-transparency` 下这些半透明层退回实色，`prefers-contrast: more` 下描边与次要文字同步加深。
+动效只播一次、不循环、不跟滚动绑定：视图入场上浮、KPI 数字滚动、折线描入、柱形/圆环/热力图错峰出现。`prefers-reduced-motion: reduce` 下动画时长归零，DOM 里直接是最终数值。
 
-字距随字号收紧（h1 `-.033em`，正文 0），行高随之放松；焦点统一用深叶绿（键盘 3px outline、输入框 3px 光环），玫瑰只留给品牌强调与警示，避免聚焦被误读成出错。正文灰在参考稿 `#75897d` 的基础上压深为 `#566d60`，小字在薄荷底上仍有 4.8:1。按钮、图标按钮、筛选项在按下后 110ms 内完成 `scale(.97)`，回弹同样受 `prefers-reduced-motion` 约束。
+## 无障碍
 
-几条实现约定：
+- 10 条后台路由 × 1440/390 跑 axe WCAG 2.0/2.1 A+AA，0 violations（`npm run qa`）；
+- 官网提供「跳到正文」，后台提供「跳到内容」；焦点样式统一为深叶绿；
+- 手机抽屉打开时 `.main` 设为 `inert`，焦点移入当前导航项；Esc 关闭、关闭后焦点回到菜单按钮，跨过 981px 断点自动关闭；
+- 图表都带 `role="img"` 与中文 `aria-label`，数值同时以文本出现在图例、脚注或表格里；
+- 表格支持键盘横向滚动，排序/筛选控件都有可见标签；
+- 支持 `prefers-reduced-motion`、`prefers-reduced-transparency`、`prefers-contrast: more`。
 
-- 每张图都带 `role="img"` 与中文 `aria-label`，数值同时以文本形式出现在图例、脚注或表格里，不靠颜色单独传达；
-- 手机端（≤640px）使用 380 单位的窄 viewBox，刻度和轴标签按比例放大，x 轴刻度自动减到 4 个，避免挤在一起；
-- 悬停提示的数值在渲染时就格式化成字符串再存进 `data-chart`，因为函数无法通过 JSON 传递；
-- 热力图固定 10–80% 色阶，换设备换时段也能横向比较。
+浏览器基线：`inert` 可用的版本，即 Chrome / Edge 102+、Safari 15.5+、Firefox 112+。自动化回归以 Chromium 1440/390 为门槛；WebKit 390 的抽屉与官网导航/reveal 冒烟是发布前的附加检查项。
 
-动效在 `admin.css` 与 `app.js` 里：视图入场用 `.is-enter` 做一次性上浮，KPI 数字用 `animateNumbers()`（读取 `data-count`）从 0 滚动到目标值，折线用 `stroke-dasharray` 画入，柱形/圆环/热力图各自错峰出现。全部只播一次、不循环、不跟滚动绑定；`prefers-reduced-motion: reduce` 下动画时长归零，DOM 里直接就是最终数值。
+## QA 套件
 
-## 目录结构
+`web/qa/` 会在构建产物上跑五组检查：
 
-```
-web/
-├── index.html            官网
-├── assets/               官网样式、脚本、图片、图标
-├── admin/
-│   ├── index.html        后台外壳
-│   └── assets/
-│       ├── admin.css     后台设计系统
-│       └── js/
-│           ├── app.js    路由、外壳、侧边栏
-│           ├── store.js  演示/接口数据归一化与判定逻辑
-│           ├── api.js    接口封装、令牌与地址管理
-│           ├── views/    各页面
-│           └── charts.js 图表组件（折线、柱状、圆环、排行、仪表、热力图）
-└── README.md
-```
+| 脚本 | 覆盖 |
+| --- | --- |
+| `smoke.mjs` | 10 条后台路由 × 1440/390：标题、h1、无 console error、无横向溢出、图片可加载 |
+| `a11y.mjs` | 同 20 组跑 axe WCAG 2.0/2.1 A+AA，要求 0 violations |
+| `drawer.mjs` | 390 抽屉：`inert` 焦点隔离、Esc 关闭、焦点归还、断点自动关闭 |
+| `motion.mjs` | `prefers-reduced-motion: reduce` 下无运行动画；默认上下文仍有动画（防止空断言） |
+| `site.mjs` | 官网无 JS 首屏、导航三种关闭方式、6 张养护卡、finder、FAQ、剪贴板成功/失败、滚动 reveal |
+
+`run.mjs` 负责 build、起 `vite preview`、按脚本汇总失败并在结束时清理进程。
 
 ## 约定
 
 - 全站中文，产品名统一「护花使者 / FLOWER GUARDIAN」；
 - 不使用 emoji，图标一律内联 SVG；
 - 不编造用户数、评价、评分、增长数据；演示数据的标签必须保留；
-- 样式表带 `?v=` 版本号（`index.html` 与 `admin/index.html`），改完 CSS 记得同步改，否则浏览器会继续用缓存里的旧样式。
+- 改文案时保持既有措辞，不顺手润色；
+- 新增共享组件优先复用现有全局类名，CSS Modules 只放增量规则。
 
 ## 官网内测申请
 
-内测区不接后端：填完植物名、位置、系统后，点「复制申请内容」把这段文字复制到剪贴板，再由申请人自己粘到邮件或聊天窗口发给我们。没有收件邮箱、没有提交接口，也不保存任何表单数据。浏览器拒绝剪贴板权限时会退回一个已选中的文本框，让申请人手动复制。
+内测区不接后端：填完植物名、位置、系统后，点「复制申请内容」把这段文字复制到剪贴板，再由申请人自己粘到邮件或聊天窗口发给我们。没有收件邮箱、没有提交接口，也不保存任何表单数据。浏览器拒绝剪贴板权限时会退回一个已选中、已聚焦的文本框，让申请人手动复制。

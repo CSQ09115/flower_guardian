@@ -21,7 +21,7 @@
 | 层级 | 技术 |
 |------|------|
 | 后端 | FastAPI + PostgreSQL |
-| 管理后台 | Next.js 14 + Tailwind CSS |
+| 管理后台 | Vite + React + TypeScript（静态站点） |
 | 前端 | React Native (移动端) |
 | CV模型 | YOLOv11 (双模型：植物识别 + 病虫害识别) |
 | 模型部署 | ONNX Runtime (服务器端 + 边缘端) |
@@ -87,7 +87,7 @@ Flower_Guardian/
 │   ├── train/             # 模型训练
 │   ├── Dockerfile
 │   └── requirements.txt
-├── web/                    # Next.js 管理后台
+├── web/                    # Vite + React 官网（/）与运营后台（/admin/）
 ├── firmware/               # ESP32-S3 固件（详见 firmware/README.md）
 │   ├── src/main.cpp       # 主程序：WiFi 联网 + 传感器采集 + HTTP 上报
 │   ├── include/           # board_pins.h 引脚地图、wifi_config.h 本地配置
@@ -132,7 +132,7 @@ docker-compose up -d postgres
 
 服务启动后：
 - 后端 API: http://localhost:8000
-- 前端 Web: http://localhost:3000
+- 官网 / 运营后台（本地单独启动）: http://localhost:4177
 - PostgreSQL: localhost:5432
 
 ### 本地开发
@@ -186,7 +186,8 @@ npm install
 npm run dev
 ```
 
-管理后台地址: http://localhost:3000/admin
+官网地址: http://127.0.0.1:4177/
+管理后台地址: http://127.0.0.1:4177/admin/
 
 ## APP 打包
 

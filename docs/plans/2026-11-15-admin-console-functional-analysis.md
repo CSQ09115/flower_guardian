@@ -1,5 +1,7 @@
 # 护花使者 管理后台 功能分析文档
 
+> 注：本文档写作时 web/ 尚不存在；前端技术栈与目录以 docs/superpowers/specs/2026-11-19-web-react-refactor-design.md 与 web/README.md 为准。
+
 | 项 | 内容 |
 | --- | --- |
 | 版本 | v1.0 |
