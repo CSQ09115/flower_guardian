@@ -1,6 +1,13 @@
 import { VIZ } from "./geometry";
 
-export type HBarItem = { label: string; value: number; sub?: string; color?: string };
+export type HBarItem = {
+  label: string;
+  value: number;
+  sub?: string;
+  color?: string;
+  /** Optional secondary number rendered under the value (e.g. the amount). */
+  amount?: number;
+};
 
 export type HBarChartProps = {
   items: HBarItem[];
