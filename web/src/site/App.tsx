@@ -9,12 +9,15 @@ import { Spec } from "./sections/Spec";
 import { Faq } from "./sections/Faq";
 import { Cta } from "./sections/Cta";
 import { Footer } from "./sections/Footer";
+import { useReveal } from "./hooks/useReveal";
 
 /**
  * Marketing page root. Section order and nesting mirror `legacy/index.html`
  * one-to-one so the ported stylesheet keeps computing the same layout.
  */
 export function SiteApp(): JSX.Element {
+  useReveal();
+
   return (
     <>
       <a className="skip" href="#main">

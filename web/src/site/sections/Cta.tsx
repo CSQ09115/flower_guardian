@@ -1,11 +1,23 @@
+import { useEffect, useRef } from "react";
 import { SiteIcon } from "../icons";
+import { useApplicationCopy } from "../hooks/useApplicationCopy";
 
 /**
- * Section 08 — beta application. The copy-to-clipboard behaviour lives in
- * `useApplicationCopy` (Task 20); the form itself mirrors the legacy markup so
- * the CSS for `.setup`, `.field`, `.seg` applies unchanged.
+ * Section 08 — beta application. The copy button, its 2.6s 「已复制」 state and
+ * the manual-copy fallback all come from `useApplicationCopy`; the markup keeps
+ * the legacy form structure so `.setup` / `.field` / `.seg` keep their styles.
  */
 export function Cta(): JSX.Element {
+  const { nickname, setNickname, place, setPlace, os, setOs, copied, note, manualText, status, submit } =
+    useApplicationCopy();
+  const manualRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (manualText === null) return;
+    manualRef.current?.focus();
+    manualRef.current?.select();
+  }, [manualText]);
+
   return (
     <section className="cta" id="beta" aria-labelledby="beta-title">
       <div className="shell cta__grid">
@@ -39,7 +51,13 @@ export function Cta(): JSX.Element {
           </ul>
         </div>
 
-        <form className="setup reveal" id="setup-form">
+        <form
+          className="setup reveal"
+          id="setup-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+          }}
+        >
           <div className="setup__head">
             <span className="setup__mark" data-icon="Leaf" data-size="18">
               <SiteIcon name="Leaf" size={18} />
@@ -56,9 +74,10 @@ export function Cta(): JSX.Element {
               id="plant-nickname"
               name="nickname"
               type="text"
-              defaultValue="窗台上的绿萝"
+              value={nickname}
               maxLength={24}
               autoComplete="off"
+              onChange={(event) => setNickname(event.target.value)}
             />
           </label>
 
@@ -66,15 +85,33 @@ export function Cta(): JSX.Element {
             <legend>放在哪里</legend>
             <div className="seg">
               <label>
-                <input type="radio" name="place" value="南阳台" defaultChecked />
+                <input
+                  type="radio"
+                  name="place"
+                  value="南阳台"
+                  checked={place === "南阳台"}
+                  onChange={() => setPlace("南阳台")}
+                />
                 <span>南阳台</span>
               </label>
               <label>
-                <input type="radio" name="place" value="北卧室" />
+                <input
+                  type="radio"
+                  name="place"
+                  value="北卧室"
+                  checked={place === "北卧室"}
+                  onChange={() => setPlace("北卧室")}
+                />
                 <span>北卧室</span>
               </label>
               <label>
-                <input type="radio" name="place" value="办公室" />
+                <input
+                  type="radio"
+                  name="place"
+                  value="办公室"
+                  checked={place === "办公室"}
+                  onChange={() => setPlace("办公室")}
+                />
                 <span>办公室</span>
               </label>
             </div>
@@ -82,23 +119,41 @@ export function Cta(): JSX.Element {
 
           <label className="field">
             <span>想装哪个系统</span>
-            <select id="plant-os" name="os" defaultValue="iOS">
+            <select id="plant-os" name="os" value={os} onChange={(event) => setOs(event.target.value)}>
               <option>iOS</option>
               <option>Android</option>
               <option>都行</option>
             </select>
           </label>
 
-          <button className="btn btn--dark btn--full" id="beta-submit" type="button">
-            <span className="btn__text">复制申请内容</span>
+          {manualText !== null ? (
+            <textarea
+              id="beta-manual"
+              readOnly
+              rows={4}
+              className="setup__manual"
+              ref={manualRef}
+              value={manualText}
+            />
+          ) : null}
+
+          <button
+            className={copied ? "btn btn--dark btn--full is-copied" : "btn btn--dark btn--full"}
+            id="beta-submit"
+            type="button"
+            onClick={() => void submit()}
+          >
+            <span className="btn__text">{copied ? "已复制" : "复制申请内容"}</span>
             <span className="btn__check" data-icon="Check" data-size="17">
               <SiteIcon name="Check" size={17} />
             </span>
           </button>
           <p className="setup__note" id="beta-note">
-            点一下复制申请内容，粘到邮件或聊天窗口发给我们即可。
+            {note}
           </p>
-          <p className="sr-only" id="beta-status" role="status" aria-live="polite"></p>
+          <p className="sr-only" id="beta-status" role="status" aria-live="polite">
+            {status}
+          </p>
         </form>
       </div>
       <div className="cta__blend" aria-hidden="true"></div>

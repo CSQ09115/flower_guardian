@@ -1,13 +1,44 @@
 import { SiteIcon } from "../icons";
 import { FINDER } from "../data/plants";
+import { useFinder } from "../hooks/useFinder";
+
+const STEPS: { question: string; options: { value: string; label: string }[] }[] = [
+  {
+    question: "你家的光，大概是什么样？",
+    options: [
+      { value: "bright", label: "窗边很亮，有直射" },
+      { value: "soft", label: "有散光，不直晒" },
+      { value: "low", label: "基本靠灯光" },
+    ],
+  },
+  {
+    question: "你多久在家一次？",
+    options: [
+      { value: "often", label: "经常出差，一走好几天" },
+      { value: "sometimes", label: "周末在，平时早出晚归" },
+      { value: "home", label: "每天都在家" },
+    ],
+  },
+  {
+    question: "家里有猫或小孩吗？",
+    options: [
+      { value: "yes", label: "有，得放得高一点" },
+      { value: "no", label: "没有" },
+    ],
+  },
+];
 
 /**
- * Section 03 — the three-question plant finder. This task ships the static
- * shell: step 1 is visible (progress starts at one third) and the result panel
- * is hidden. `useFinder` (Task 20) advances the steps and fills the result.
+ * Section 03 — the three-question plant finder. Options lock for 170ms after a
+ * pick, then the next question slides in; the third pick swaps the questions
+ * for a ranked result with two alternates.
  */
 export function Finder(): JSX.Element {
+  const { step, picks, done, result, pick, restart } = useFinder();
   const starter = FINDER.pothos;
+  const top = result?.top.plant ?? starter;
+  const alts = result?.alts ?? [];
+  const progress = done ? "100%" : `${((step + 1) / 3) * 100}%`;
 
   return (
     <section className="section finder" id="finder" aria-labelledby="finder-title">
@@ -51,101 +82,85 @@ export function Finder(): JSX.Element {
               </i>
               养不死测试
             </span>
-            <span id="finder-step">1 / 3</span>
+            <span id="finder-step">{done ? "3 / 3" : `${step + 1} / 3`}</span>
           </div>
           <div className="finder__progress">
-            <i id="finder-progress"></i>
+            <i id="finder-progress" style={{ width: progress }}></i>
           </div>
 
-          <div className="finder__step is-active" data-step="0">
-            <p className="finder__q">你家的光，大概是什么样？</p>
-            <button className="opt" type="button" data-value="bright">
-              <span>窗边很亮，有直射</span>
-              <i data-icon="ArrowRight" data-size="16">
-                <SiteIcon name="ArrowRight" size={16} />
-              </i>
-            </button>
-            <button className="opt" type="button" data-value="soft">
-              <span>有散光，不直晒</span>
-              <i data-icon="ArrowRight" data-size="16">
-                <SiteIcon name="ArrowRight" size={16} />
-              </i>
-            </button>
-            <button className="opt" type="button" data-value="low">
-              <span>基本靠灯光</span>
-              <i data-icon="ArrowRight" data-size="16">
-                <SiteIcon name="ArrowRight" size={16} />
-              </i>
-            </button>
-          </div>
+          {STEPS.map((entry, index) => (
+            <div
+              className={index === step ? "finder__step is-active" : "finder__step"}
+              data-step={index}
+              key={entry.question}
+              hidden={done || index !== step}
+            >
+              <p className="finder__q">{entry.question}</p>
+              {entry.options.map((option) => (
+                <button
+                  className={picks[index] === option.value ? "opt is-picked" : "opt"}
+                  type="button"
+                  data-value={option.value}
+                  key={option.value}
+                  onClick={() => pick(option.value)}
+                >
+                  <span>{option.label}</span>
+                  <i data-icon="ArrowRight" data-size="16">
+                    <SiteIcon name="ArrowRight" size={16} />
+                  </i>
+                </button>
+              ))}
+            </div>
+          ))}
 
-          <div className="finder__step" data-step="1" hidden>
-            <p className="finder__q">你多久在家一次？</p>
-            <button className="opt" type="button" data-value="often">
-              <span>经常出差，一走好几天</span>
-              <i data-icon="ArrowRight" data-size="16">
-                <SiteIcon name="ArrowRight" size={16} />
-              </i>
-            </button>
-            <button className="opt" type="button" data-value="sometimes">
-              <span>周末在，平时早出晚归</span>
-              <i data-icon="ArrowRight" data-size="16">
-                <SiteIcon name="ArrowRight" size={16} />
-              </i>
-            </button>
-            <button className="opt" type="button" data-value="home">
-              <span>每天都在家</span>
-              <i data-icon="ArrowRight" data-size="16">
-                <SiteIcon name="ArrowRight" size={16} />
-              </i>
-            </button>
-          </div>
-
-          <div className="finder__step" data-step="2" hidden>
-            <p className="finder__q">家里有猫或小孩吗？</p>
-            <button className="opt" type="button" data-value="yes">
-              <span>有，得放得高一点</span>
-              <i data-icon="ArrowRight" data-size="16">
-                <SiteIcon name="ArrowRight" size={16} />
-              </i>
-            </button>
-            <button className="opt" type="button" data-value="no">
-              <span>没有</span>
-              <i data-icon="ArrowRight" data-size="16">
-                <SiteIcon name="ArrowRight" size={16} />
-              </i>
-            </button>
-          </div>
-
-          <p className="finder__hint" id="finder-hint">
+          <p className="finder__hint" id="finder-hint" hidden={done}>
             <i data-icon="Clock" data-size="14">
               <SiteIcon name="Clock" size={14} />
             </i>
             三个问题，大约 20 秒；答完直接看到它的养护卡。
           </p>
 
-          <div className="finder__result" id="finder-result" hidden aria-live="polite">
+          <div className="finder__result" id="finder-result" hidden={!done} aria-live="polite">
             <p className="finder__q">先从这一盆开始</p>
             <div className="result-main">
-              <img id="result-img" src={starter.img} alt="" width={starter.w} height={starter.h} />
+              <img
+                id="result-img"
+                src={top.img}
+                alt={result ? top.alt : ""}
+                width={top.w}
+                height={top.h}
+              />
               <div>
                 <span className="result__ease" id="result-ease">
-                  难度 · {starter.ease}
+                  难度 · {top.ease}
                 </span>
-                <h3 id="result-name">{starter.name}</h3>
-                <p id="result-why">{starter.reason}</p>
+                <h3 id="result-name">{top.name}</h3>
+                <p id="result-why">{top.reason}</p>
               </div>
             </div>
             <ul className="result-tags" id="result-tags">
-              {starter.tags.map((tag) => (
+              {top.tags.map((tag) => (
                 <li key={tag}>{tag}</li>
               ))}
             </ul>
-            <p className="result-note" id="result-note"></p>
+            <p className="result-note" id="result-note">
+              {result?.note ?? ""}
+            </p>
 
-            <div className="result-alts" id="result-alts"></div>
+            <div className="result-alts" id="result-alts">
+              {alts.map((entry) => (
+                <div className="alt" key={entry.key}>
+                  <img src={entry.plant.img} alt={entry.plant.alt} width={entry.plant.w} height={entry.plant.h} />
+                  <div>
+                    <b>{entry.plant.name}</b>
+                    <span>难度 · {entry.plant.ease}</span>
+                  </div>
+                  <em>备选</em>
+                </div>
+              ))}
+            </div>
 
-            <button className="btn btn--dark btn--full" id="finder-restart" type="button">
+            <button className="btn btn--dark btn--full" id="finder-restart" type="button" onClick={restart}>
               重新选一次
             </button>
             <p className="fine">演示结果基于产品里现有的新手推荐逻辑，正式版以 App 内 5 题结果为准。</p>

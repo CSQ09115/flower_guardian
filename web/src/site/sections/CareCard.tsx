@@ -1,13 +1,13 @@
 import { SiteIcon } from "../icons";
 import { CARE, PLANT_KEYS } from "../data/plants";
-import type { PlantKey } from "../data/plants";
+import { useCareTabs } from "../hooks/useCareTabs";
 
 /**
- * Section 02 — the care card. Tab state (click, arrow keys, Home/End) is added
- * in Task 20; the initial render always shows 绿萝, like the legacy page.
+ * Section 02 — the care card. Click, arrow keys and Home/End move between the
+ * six plants; the panel replays its entrance animation on every switch.
  */
 export function CareCard(): JSX.Element {
-  const active: PlantKey = "pothos";
+  const { active, select, onKeyDown, tabRefs, panelRef } = useCareTabs();
   const plant = CARE[active];
 
   return (
@@ -24,7 +24,13 @@ export function CareCard(): JSX.Element {
         </div>
 
         <div className="card-layout">
-          <div className="tabs reveal" role="tablist" aria-label="选择一种植物" aria-orientation="vertical">
+          <div
+            className="tabs reveal"
+            role="tablist"
+            aria-label="选择一种植物"
+            aria-orientation="vertical"
+            onKeyDown={onKeyDown}
+          >
             {PLANT_KEYS.map((key, index) => (
               <button
                 key={key}
@@ -36,6 +42,10 @@ export function CareCard(): JSX.Element {
                 tabIndex={key === active ? 0 : -1}
                 data-plant={key}
                 type="button"
+                ref={(element) => {
+                  tabRefs.current[key] = element;
+                }}
+                onClick={() => select(key)}
               >
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 {CARE[key].name}
@@ -50,6 +60,7 @@ export function CareCard(): JSX.Element {
             role="tabpanel"
             aria-labelledby={`tab-${active}`}
             tabIndex={0}
+            ref={panelRef}
           >
             <div className="care__photo">
               <img
