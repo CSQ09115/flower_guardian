@@ -51,6 +51,7 @@ export type AdminDataValue = {
   toast: (message: string, tone?: ToastTone) => void;
   dismissToast: (id: number) => void;
   refresh: () => Promise<void>;
+  loadLive: () => Promise<boolean>;
   logout: () => void;
   resetDemo: () => void;
   saveProduct: (payload: ProductInput, id?: number) => Promise<void>;
@@ -507,6 +508,7 @@ export function useAdminDataStore(): AdminDataValue {
       toast,
       dismissToast,
       refresh,
+      loadLive,
       logout,
       resetDemo,
       saveProduct,
@@ -528,6 +530,7 @@ export function useAdminDataStore(): AdminDataValue {
       toast,
       dismissToast,
       refresh,
+      loadLive,
       logout,
       resetDemo,
       saveProduct,
