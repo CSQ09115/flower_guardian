@@ -1,0 +1,12 @@
+/* Chart-internal styles.
+
+   Every class the charts use (`.chart`, `.chart__grid`, `.chart__axis`,
+   `.chart__line`, `.chart__area`, `.chart__band`, `.chart__hit`,
+   `.chart__cursor`, `.chart__hover`, `.chart-tip`, `.chart__bar`,
+   `.sparkline`, …) is already defined in the global admin sheet, so the
+   charts render exactly like the baseline.
+
+   This module stays empty on purpose: moving those rules here would fork the
+   visual baseline and break the other pages that share them. The `barGrow`
+   and `arcIn` keyframes also already exist in `admin.css` and are not
+   repeated here. */
