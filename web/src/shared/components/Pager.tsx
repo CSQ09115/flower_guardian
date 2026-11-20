@@ -5,9 +5,9 @@ import { AdminIcon } from "../../admin/icons";
  * and the empty-list case: the old views only injected the pager when the
  * filtered list had rows, so `total <= 0` renders nothing.
  *
- * Legacy has no page-number buttons, so no element represents "the current
- * page" in a page list — `aria-current="page"` is deliberately omitted from the
- * summary `<span>`. The two buttons stay plain buttons, as before.
+ * Legacy has no page-number buttons, so the summary `<span>` is the only element
+ * that can carry `aria-current="page"` (plan Task 3 step 5). The two buttons stay
+ * plain buttons, as before.
  */
 export function Pager(props: { total: number; page: number; size: number; onPage: (p: number) => void }): JSX.Element | null {
   const { total, page, size, onPage } = props;
@@ -20,7 +20,7 @@ export function Pager(props: { total: number; page: number; size: number; onPage
 
   return (
     <div className="pager">
-      <span>
+      <span aria-current="page">
         共 {total} 条 · 第 {current} / {pages} 页
       </span>
       <span className="pager__spacer" />
