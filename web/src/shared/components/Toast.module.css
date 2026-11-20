@@ -1,0 +1,9 @@
+/*
+ * Intentionally empty.
+ *
+ * `.toasts` / `.toast` / `.toast.is-error` already exist in the global
+ * `admin/styles/admin.css` sheet, and the viewport is a plain fixed block that
+ * needs no portal wrapper (z-index: 120 is on `.toasts` itself). Inventing
+ * module rules here would only duplicate or drift from that sheet, so
+ * `Toast.tsx` does not import a module at all.
+ */

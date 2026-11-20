@@ -1,0 +1,19 @@
+/*
+ * The global admin sheet already owns every `.modal*` visual rule. These two
+ * rules are the only things the React port needs on top of it.
+ */
+
+/* Legacy put z-index: 90 on `#modal-root`. When the shell does not render that
+   element the portal hangs off <body>, so the layer has to move onto the
+   backdrop or the dialog would paint under the sticky sidebar/topbar. */
+.backdrop {
+  z-index: 90;
+}
+
+/* `.modal` is focusable (tabIndex={-1}) so Esc and Tab have a landing spot even
+   when the body has no controls. Only keyboard focus gets a ring, so opening a
+   dialog programmatically does not flash an outline. */
+.dialog:focus-visible {
+  outline: 2px solid var(--green-2);
+  outline-offset: 3px;
+}
