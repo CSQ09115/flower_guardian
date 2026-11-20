@@ -1,4 +1,6 @@
 /* Ported verbatim from web/legacy/assets/icons.js (Reicon, MIT, https://reicon.dev) — do not retype paths. */
+import { useId } from "react";
+
 export const REICON: Record<string, string> = {
   "ArrowRight": "<path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M13.4697 5.46967C13.7626 5.17678 14.2374 5.17678 14.5303 5.46967L20.5303 11.4697C20.8232 11.7626 20.8232 12.2374 20.5303 12.5303L14.5303 18.5303C14.2374 18.8232 13.7626 18.8232 13.4697 18.5303C13.1768 18.2374 13.1768 17.7626 13.4697 17.4697L18.1893 12.75H4C3.58579 12.75 3.25 12.4142 3.25 12C3.25 11.5858 3.58579 11.25 4 11.25H18.1893L13.4697 6.53033C13.1768 6.23744 13.1768 5.76256 13.4697 5.46967Z\" fill=\"currentColor\"/>",
   "ArrowUpRight": "<path d=\"M19 4.25C19.4142 4.25 19.75 4.58579 19.75 5V13C19.75 13.4142 19.4142 13.75 19 13.75C18.5858 13.75 18.25 13.4142 18.25 13V6.81066L5.53033 19.5303C5.23744 19.8232 4.76256 19.8232 4.46967 19.5303C4.17678 19.2374 4.17678 18.7626 4.46967 18.4697L17.1893 5.75H11C10.5858 5.75 10.25 5.41421 10.25 5C10.25 4.58579 10.5858 4.25 11 4.25H19Z\" fill=\"currentColor\"/>",
@@ -28,16 +30,18 @@ export const REICON: Record<string, string> = {
   "Window": "<path d=\"M7 6C7 6.55229 6.55229 7 6 7C5.44772 7 5 6.55229 5 6C5 5.44772 5.44772 5 6 5C6.55229 5 7 5.44772 7 6Z\" fill=\"currentColor\"/><path d=\"M10 6C10 6.55229 9.55229 7 9 7C8.44772 7 8 6.55229 8 6C8 5.44772 8.44772 5 9 5C9.55229 5 10 5.44772 10 6Z\" fill=\"currentColor\"/><path d=\"M12 7C12.5523 7 13 6.55229 13 6C13 5.44772 12.5523 5 12 5C11.4477 5 11 5.44772 11 6C11 6.55229 11.4477 7 12 7Z\" fill=\"currentColor\"/><path fill-rule=\"evenodd\" clip-rule=\"evenodd\" d=\"M11.9426 1.25C9.63423 1.24999 7.82519 1.24998 6.41371 1.43975C4.96897 1.63399 3.82895 2.03933 2.93414 2.93414C2.03933 3.82895 1.63399 4.96897 1.43975 6.41371C1.32736 7.24965 1.28153 8.22504 1.26285 9.36102C1.25441 9.40606 1.25 9.45251 1.25 9.5C1.25 9.5399 1.25312 9.57907 1.25912 9.61728C1.24999 10.3296 1.25 11.1031 1.25 11.9426V12.0574C1.24999 14.3658 1.24998 16.1748 1.43975 17.5863C1.63399 19.031 2.03933 20.1711 2.93414 21.0659C3.82895 21.9607 4.96897 22.366 6.41371 22.5603C7.82519 22.75 9.63423 22.75 11.9426 22.75H12.0574C14.3658 22.75 16.1748 22.75 17.5863 22.5603C19.031 22.366 20.1711 21.9607 21.0659 21.0659C21.9607 20.1711 22.366 19.031 22.5603 17.5863C22.75 16.1748 22.75 14.3658 22.75 12.0574V11.9426C22.75 11.1031 22.75 10.3296 22.7409 9.61728C22.7469 9.57907 22.75 9.5399 22.75 9.5C22.75 9.45251 22.7456 9.40606 22.7371 9.36102C22.7185 8.22504 22.6726 7.24965 22.5603 6.41371C22.366 4.96897 21.9607 3.82895 21.0659 2.93414C20.1711 2.03933 19.031 1.63399 17.5863 1.43975C16.1748 1.24998 14.3658 1.24999 12.0574 1.25H11.9426ZM2.75 12C2.75 11.3715 2.75011 10.7898 2.7535 10.25H8.25L8.25 21C8.25 21.0718 8.26009 21.1412 8.27892 21.2069C7.65589 21.1811 7.1055 21.1398 6.61358 21.0736C5.33517 20.9018 4.56445 20.5749 3.9948 20.0052C3.42514 19.4355 3.09825 18.6648 2.92637 17.3864C2.75159 16.0864 2.75 14.3782 2.75 12ZM9.71019 21.2417C10.3969 21.2498 11.1563 21.25 12 21.25C14.3782 21.25 16.0864 21.2484 17.3864 21.0736C18.6648 20.9018 19.4355 20.5749 20.0052 20.0052C20.5749 19.4355 20.9018 18.6648 21.0736 17.3864C21.2484 16.0864 21.25 14.3782 21.25 12C21.25 11.3715 21.2499 10.7898 21.2465 10.25H9.75L9.75 21C9.75 21.0846 9.736 21.1659 9.71019 21.2417ZM2.92637 6.61358C2.84403 7.22599 2.80013 7.92901 2.77672 8.75H21.2233C21.1999 7.92901 21.156 7.22599 21.0736 6.61358C20.9018 5.33517 20.5749 4.56445 20.0052 3.9948C19.4355 3.42514 18.6648 3.09825 17.3864 2.92637C16.0864 2.75159 14.3782 2.75 12 2.75C9.62178 2.75 7.91356 2.75159 6.61358 2.92637C5.33517 3.09825 4.56445 3.42514 3.9948 3.9948C3.42514 4.56445 3.09825 5.33517 2.92637 6.61358Z\" fill=\"currentColor\"/>",
 };
 
-let uid = 0;
-
 /**
  * Reicon bodies may carry <defs> ids (clip paths). Suffix them per instance so the
  * same icon rendered twice never ships duplicate ids in one document — same pass as
  * the legacy `scoped()`.
+ *
+ * The legacy page derived the suffix from a module-level counter (`-r1`, `-r2`, …).
+ * That numbering is render-order dependent, so it cannot survive prerender + hydrate:
+ * the server and the client must emit the same id for the same node. `useId()` is
+ * stable across that boundary and still unique per instance, which is the only
+ * property the suffix actually needs.
  */
-function scoped(body: string): string {
-  uid += 1;
-  const suffix = `-r${uid}`;
+function scoped(body: string, suffix: string): string {
   return body
     .replace(/id="([^"]+)"/g, `id="$1${suffix}"`)
     .replace(/url\(#([^)]+)\)/g, `url(#$1${suffix})`);
@@ -47,8 +51,9 @@ export type SiteIconProps = { name: string; size?: number };
 
 /** Mirrors the legacy `reicon(name, opts)` markup; unknown names render nothing. */
 export function SiteIcon({ name, size }: SiteIconProps): JSX.Element {
+  const suffix = `-r${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  if (!Object.prototype.hasOwnProperty.call(REICON, name)) return <></>;
   const body = REICON[name];
-  if (!body) return <></>;
   const px = size || 20;
   return (
     <svg
@@ -60,7 +65,7 @@ export function SiteIcon({ name, size }: SiteIconProps): JSX.Element {
       className="reicon"
       aria-hidden="true"
       focusable="false"
-      dangerouslySetInnerHTML={{ __html: scoped(body) }}
+      dangerouslySetInnerHTML={{ __html: scoped(body, suffix) }}
     />
   );
 }

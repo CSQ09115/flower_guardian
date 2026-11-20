@@ -59,6 +59,7 @@ export type AdminIconProps = {
 /** Mirrors the legacy `icon(name, opts)` markup, including the `sprout` fallback. */
 export function AdminIcon({ name, size, cls, stroke }: AdminIconProps): JSX.Element {
   const px = size || 18;
+  const body = Object.prototype.hasOwnProperty.call(ADMIN_ICONS, name) ? ADMIN_ICONS[name] : ADMIN_ICONS.sprout;
   return (
     <svg
       className={`icon${cls ? ` ${cls}` : ""}`}
@@ -72,7 +73,7 @@ export function AdminIcon({ name, size, cls, stroke }: AdminIconProps): JSX.Elem
       strokeLinejoin="round"
       aria-hidden="true"
       focusable="false"
-      dangerouslySetInnerHTML={{ __html: ADMIN_ICONS[name] ?? ADMIN_ICONS.sprout }}
+      dangerouslySetInnerHTML={{ __html: body }}
     />
   );
 }
