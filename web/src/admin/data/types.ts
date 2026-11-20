@@ -28,10 +28,12 @@ export type Product = {
 export type Plant = {
   id: number;
   name: string;
-  scientific_name: string;
-  category: string;
+  // The FastAPI schema marks every field below as Optional, so live rows can
+  // carry `null` (and the create form sends `null` for empty inputs).
+  scientific_name: string | null;
+  category: string | null;
   image_url: string | null;
-  yolo_class_id: number;
+  yolo_class_id: number | null;
   care_level: number;
   // Plan Task 4 writes `beginner_friendly: boolean`, but the legacy seed stores a
   // 1-5 score there (`beginner_friendly: 5`, `: 4`, `: 3`, …) and the backend
@@ -40,17 +42,17 @@ export type Plant = {
   // `beginner_friendly: Optional[int] = 3`. A boolean cannot hold those values,
   // so the type follows the data. `is_toxic` is the boolean one.
   beginner_friendly: number;
-  description: string;
-  light_requirement: string;
-  water_requirement: string;
-  watering_tip: string;
-  temperature_range: string;
-  humidity_range: string;
+  description: string | null;
+  light_requirement: string | null;
+  water_requirement: string | null;
+  watering_tip: string | null;
+  temperature_range: string | null;
+  humidity_range: string | null;
   is_toxic: boolean;
   features: string[];
   survival_rate: number;
-  tips: string;
-  common_mistakes: string;
+  tips: string | null;
+  common_mistakes: string | null;
   created_at: string;
 };
 
@@ -158,6 +160,27 @@ export type ProductInput = Pick<
   "name" | "description" | "price" | "stock" | "plant_id" | "status" | "image_url"
 >;
 
-export type PlantInput = Partial<Omit<Plant, "id" | "created_at">> & { name: string };
+/* The legacy plant form sends empty strings as `null`, so the writable fields
+   accept null as well. */
+export type PlantInput = {
+  name: string;
+  scientific_name?: string | null;
+  category?: string | null;
+  care_level?: number;
+  yolo_class_id?: number | null;
+  light_requirement?: string | null;
+  water_requirement?: string | null;
+  watering_tip?: string | null;
+  temperature_range?: string | null;
+  humidity_range?: string | null;
+  image_url?: string | null;
+  description?: string | null;
+  tips?: string | null;
+  common_mistakes?: string | null;
+  features?: string[];
+  survival_rate?: number;
+  beginner_friendly?: number;
+  is_toxic?: boolean;
+};
 
 export type OrderPatch = { status: OrderStatus };
