@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { AdminIcon } from "../icons";
 import { apiBase, login, setApiBase, setToken } from "../data/api";
 import { useAdminData } from "../data/store";
@@ -7,12 +7,13 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 import { LoginShell } from "../layout/LoginShell";
 
 /**
- * Login screen, ported from `legacy/admin/assets/js/views/login.js`: the same
- * copy, the same fields, the same API-base override and the same demo entry.
+ * Login screen: username, password and the API-base override. A successful
+ * login stores the token, loads the PostgreSQL-backed rows and enters the
+ * console; there is no offline entry.
  */
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
-  const { loadLive, toast } = useAdminData();
+  const { loadLive, toast, signedIn } = useAdminData();
   useDocumentTitle();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -40,6 +41,8 @@ export function LoginPage(): JSX.Element {
       setToken("");
     }
   };
+
+  if (signedIn) return <Navigate to="/overview" replace />;
 
   return (
     <LoginShell>
@@ -86,7 +89,7 @@ export function LoginPage(): JSX.Element {
           <h2>登录运营后台</h2>
           <p>
             使用后端 <code style={{ fontFamily: "var(--font-mono)", fontSize: "11.5px" }}>role=admin</code>{" "}
-            的账号。登录成功后自动切换到实时接口。
+            的账号。登录成功后直接读取实时接口。
           </p>
 
           <form id="login-form" noValidate onSubmit={(event) => void submit(event)}>
@@ -149,24 +152,6 @@ export function LoginPage(): JSX.Element {
             </button>
           </form>
 
-          <div className="login__demo">
-            <span style={{ color: "var(--green-2)" }}>
-              <AdminIcon name="eye" size={18} />
-            </span>
-            <span>
-              <b>先看演示数据</b>
-              <small>不需要后端，写操作只在本次会话生效</small>
-            </span>
-            <button
-              className="btn btn--ghost btn--sm"
-              type="button"
-              id="login-demo"
-              onClick={() => navigate("/overview")}
-            >
-              以演示模式进入
-            </button>
-          </div>
-
           <details style={{ marginTop: "16px" }}>
             <summary style={{ cursor: "pointer", color: "var(--muted)", fontSize: "12px" }}>
               后端地址设置
@@ -196,8 +181,9 @@ export function LoginPage(): JSX.Element {
           </details>
 
           <p className="login__hint">
-            演示数据仅用于界面验证，不代表真实经营情况。真实接口下，告警与设备配置需要后端支持{" "}
-            <code>/api/admin/devices</code> 与固件上报接口 <code>/api/devices/{"{code}"}/readings</code>。
+            后台只读取 PostgreSQL 中的真实数据。设备读数由固件上报到{" "}
+            <code>/api/devices/{"{code}"}/readings</code>，告警与设备配置走{" "}
+            <code>/api/admin/devices</code>。
           </p>
         </div>
       </section>

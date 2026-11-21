@@ -1,15 +1,15 @@
-/* Built-in demo dataset. Every write in demo mode stays in memory.
-   Numbers are generated once from a fixed seed and are labelled「演示数据」in the UI.
+/* Deterministic fixture for the selector tests. Never imported by the app, so it
+   stays out of the production bundle: the admin console only ever renders rows
+   returned by the PostgreSQL-backed API.
 
    Ported verbatim from `legacy/admin/assets/js/demo.js` (Task 4).
    Only two things changed:
    1. `../assets/x.jpg` → `/assets/x.jpg`（图片已迁到 `public/assets/`）。
    2. 类型标注（TS strict）。数据、顺序、取整规则与生成逻辑逐字保留。 */
 
-import { addDays, dayKey, seeded, startOfDay } from "./util";
+import { addDays, dayKey, seeded, startOfDay } from "../util";
 import type {
   AdminData,
-  AdminUser,
   Alert,
   Device,
   Order,
@@ -19,9 +19,9 @@ import type {
   Product,
   Reading,
   User,
-} from "./types";
+} from "../types";
 
-export const DEMO_NOW: number = Date.now();
+export const FIXTURE_NOW: number = Date.now();
 
 const rnd = seeded(20261115);
 /* Both helpers consume exactly one `rnd()` draw, like the legacy `pick`, so the
@@ -59,7 +59,7 @@ const PRODUCT_SEED: readonly ProductSeed[] = [
   ["修枝剪套装", "一把修枝剪与一把小铲。", 32, 15, null, null],
 ];
 
-export const demoProducts: Product[] = PRODUCT_SEED.map(
+export const fixtureProducts: Product[] = PRODUCT_SEED.map(
   ([name, description, price, stock, image, plantId], i) => ({
     id: i + 1,
     name,
@@ -69,8 +69,8 @@ export const demoProducts: Product[] = PRODUCT_SEED.map(
     image_url: image ? `/assets/${image}` : null,
     plant_id: plantId,
     status: name.startsWith("喷雾") ? "inactive" : "active",
-    created_at: new Date(DEMO_NOW - (60 - i * 3) * 86400000).toISOString(),
-    updated_at: new Date(DEMO_NOW - (12 - i) * 86400000).toISOString(),
+    created_at: new Date(FIXTURE_NOW - (60 - i * 3) * 86400000).toISOString(),
+    updated_at: new Date(FIXTURE_NOW - (12 - i) * 86400000).toISOString(),
   }),
 );
 
@@ -104,7 +104,7 @@ const PLANT_SEED: readonly PlantSeed[] = [
   ["玉露", "Haworthia cooperi", "多肉", 2, 3, "明亮散射光", "土壤干透再浇", "10–25℃", "40–60%", false, 9, null],
 ];
 
-export const demoPlants: Plant[] = PLANT_SEED.map(
+export const fixturePlants: Plant[] = PLANT_SEED.map(
   ([name, scientific, category, careLevel, beginner, light, water, temp, humidity, toxic, yoloId, image], i) => ({
     id: i + 1,
     name,
@@ -125,7 +125,7 @@ export const demoPlants: Plant[] = PLANT_SEED.map(
     survival_rate: careLevel === 1 ? 92 : careLevel === 2 ? 84 : 76,
     tips: "换盆后先放在散射光处缓苗一周。",
     common_mistakes: "频繁少量浇水，导致根系长期处在半湿状态。",
-    created_at: new Date(DEMO_NOW - (90 - i * 2) * 86400000).toISOString(),
+    created_at: new Date(FIXTURE_NOW - (90 - i * 2) * 86400000).toISOString(),
   }),
 );
 
@@ -144,7 +144,7 @@ const USER_SEED: readonly UserSeed[] = [
   ["顾北", "gubei", "gubei@example.com", 13],
 ];
 
-export const demoUsers: User[] = USER_SEED.map(([, username, email, daysAgo], i) => ({
+export const fixtureUsers: User[] = USER_SEED.map(([, username, email, daysAgo], i) => ({
   id: i + 1,
   username,
   email,
@@ -152,7 +152,7 @@ export const demoUsers: User[] = USER_SEED.map(([, username, email, daysAgo], i)
   bio: i % 3 === 0 ? "阳台养了七盆，正在学配土。" : null,
   is_email_verified: i % 4 !== 3,
   role: "user",
-  created_at: new Date(DEMO_NOW - daysAgo * 86400000 - (i + 2) * 3600000).toISOString(),
+  created_at: new Date(FIXTURE_NOW - daysAgo * 86400000 - (i + 2) * 3600000).toISOString(),
 }));
 
 /* ── orders (items stay arithmetically consistent) ─────────── */
@@ -174,22 +174,22 @@ const ADDRESS = [
   "成都市武侯区科华北路 62 号",
 ] as const;
 
-export const demoOrders: Order[] = (() => {
+export const fixtureOrders: Order[] = (() => {
   const rows: Order[] = [];
   let seq = 0;
   for (let d = 13; d >= 0; d--) {
     const perDay = d === 0 ? 2 : 1 + Math.floor(rnd() * 2.4);
     for (let k = 0; k < perDay; k++) {
       seq += 1;
-      const created = new Date(DEMO_NOW - d * 86400000);
+      const created = new Date(FIXTURE_NOW - d * 86400000);
       created.setHours(9 + Math.floor(rnd() * 11), Math.floor(rnd() * 60), Math.floor(rnd() * 60), 0);
-      if (created > new Date(DEMO_NOW)) created.setTime(DEMO_NOW - 20 * 60000 * seq);
+      if (created > new Date(FIXTURE_NOW)) created.setTime(FIXTURE_NOW - 20 * 60000 * seq);
 
       const itemCount = 1 + Math.floor(rnd() * 2.2);
       const used = new Set<number>();
       const items: OrderItem[] = [];
       for (let j = 0; j < itemCount; j++) {
-        const product = pick(demoProducts.filter((p) => p.status === "active" && !used.has(p.id)));
+        const product = pick(fixtureProducts.filter((p) => p.status === "active" && !used.has(p.id)));
         if (!product) break;
         used.add(product.id);
         const quantity = 1 + Math.floor(rnd() * 2.4);
@@ -203,7 +203,7 @@ export const demoOrders: Order[] = (() => {
         });
       }
       const total = round2(items.reduce((s, item) => s + item.subtotal, 0));
-      const user = pick(demoUsers) ?? demoUsers[0];
+      const user = pick(fixtureUsers) ?? fixtureUsers[0];
       const status = d === 0 ? pickOne(["pending", "confirmed"] as const) : pickOne(STATUS_POOL);
       const date = `${created.getFullYear()}${String(created.getMonth() + 1).padStart(2, "0")}${String(created.getDate()).padStart(2, "0")}`;
       const time = `${String(created.getHours()).padStart(2, "0")}${String(created.getMinutes()).padStart(2, "0")}${String(created.getSeconds()).padStart(2, "0")}`;
@@ -301,7 +301,7 @@ function buildReadings(config: DeviceSeed): Reading[] {
   const random = seeded(Number(config.code.slice(-3)) * 977 + 13);
   const rows: Reading[] = [];
   const onlineFor = config.online ? 0 : config.lastSeenSec;
-  const latest = DEMO_NOW - onlineFor * 1000;
+  const latest = FIXTURE_NOW - onlineFor * 1000;
   for (let i = 0; i < POINTS; i++) {
     const at = latest - (POINTS - 1 - i) * STEP_MIN * 60000;
     const date = new Date(at);
@@ -332,8 +332,8 @@ function buildReadings(config: DeviceSeed): Reading[] {
   return rows;
 }
 
-export const demoDevices: Device[] = DEVICE_SEED.map((config, index) => {
-  const lastSeen = new Date(DEMO_NOW - config.lastSeenSec * 1000).toISOString();
+export const fixtureDevices: Device[] = DEVICE_SEED.map((config, index) => {
+  const lastSeen = new Date(FIXTURE_NOW - config.lastSeenSec * 1000).toISOString();
   return {
     id: index + 1,
     code: config.code,
@@ -344,7 +344,7 @@ export const demoDevices: Device[] = DEVICE_SEED.map((config, index) => {
     report_interval: 10,
     enabled: true,
     last_seen: lastSeen,
-    created_at: new Date(DEMO_NOW - (28 - index * 3) * 86400000).toISOString(),
+    created_at: new Date(FIXTURE_NOW - (28 - index * 3) * 86400000).toISOString(),
     thresholds: { ...config.thresholds },
     calibration: { ...config.calibration },
     readings: buildReadings(config),
@@ -354,91 +354,83 @@ export const demoDevices: Device[] = DEVICE_SEED.map((config, index) => {
 /* ── threshold events ─────────────────────────────────────── */
 
 const readingAt = (device: Device, minutesAgo: number): Reading => {
-  const target = DEMO_NOW - minutesAgo * 60000;
+  const target = FIXTURE_NOW - minutesAgo * 60000;
   return device.readings.reduce((best, row) =>
     Math.abs(new Date(row.created_at).getTime() - target) < Math.abs(new Date(best.created_at).getTime() - target) ? row : best,
   );
 };
 
-export const demoAlerts: Alert[] = (() => {
+export const fixtureAlerts: Alert[] = (() => {
   const list: Alert[] = [
     {
       id: 1, device_code: "FG-ESP32-003", metric: "soil_moisture", label: "土壤湿度",
-      value: readingAt(demoDevices[2], 42).soil_moisture, threshold: demoDevices[2].thresholds.moistureMin,
-      direction: "below", level: "danger", at: new Date(DEMO_NOW - 42 * 60000).toISOString(), acknowledged: false,
+      value: readingAt(fixtureDevices[2], 42).soil_moisture, threshold: fixtureDevices[2].thresholds.moistureMin,
+      direction: "below", level: "danger", at: new Date(FIXTURE_NOW - 42 * 60000).toISOString(), acknowledged: false,
       hint: "低于下限，薄荷需水量较高，建议检查浇水与滴灌。",
     },
     {
       id: 2, device_code: "FG-ESP32-003", metric: "light_lux", label: "光照",
-      value: 1280, threshold: demoDevices[2].thresholds.luxMin,
-      direction: "below", level: "warn", at: new Date(DEMO_NOW - 8 * 3600000).toISOString(), acknowledged: false,
+      value: 1280, threshold: fixtureDevices[2].thresholds.luxMin,
+      direction: "below", level: "warn", at: new Date(FIXTURE_NOW - 8 * 3600000).toISOString(), acknowledged: false,
       hint: "午后光照骤降，可能是遮阳帘挡住了光。",
     },
     {
       id: 3, device_code: "FG-ESP32-005", metric: "light_lux", label: "光照传感器",
-      value: null, threshold: demoDevices[4].thresholds.luxMin,
-      direction: "missing", level: "warn", at: new Date(DEMO_NOW - 61 * 60000).toISOString(), acknowledged: false,
+      value: null, threshold: fixtureDevices[4].thresholds.luxMin,
+      direction: "missing", level: "warn", at: new Date(FIXTURE_NOW - 61 * 60000).toISOString(), acknowledged: false,
       hint: "BH1750 未接入或读取失败，固件上报 light_lux 为 null。",
     },
     {
       id: 4, device_code: "FG-ESP32-004", metric: "online", label: "设备连接",
       value: null, threshold: 90,
-      direction: "offline", level: "warn", at: new Date(DEMO_NOW - (3 * 3600 + 20 * 60) * 1000).toISOString(), acknowledged: false,
+      direction: "offline", level: "warn", at: new Date(FIXTURE_NOW - (3 * 3600 + 20 * 60) * 1000).toISOString(), acknowledged: false,
       hint: "超过 90 秒未收到上报，最后在线 IP 192.168.43.104。",
     },
     {
       id: 5, device_code: "FG-ESP32-006", metric: "online", label: "设备连接",
       value: null, threshold: 90,
-      direction: "offline", level: "danger", at: new Date(DEMO_NOW - (26 * 3600 + 48 * 60) * 1000).toISOString(), acknowledged: false,
+      direction: "offline", level: "danger", at: new Date(FIXTURE_NOW - (26 * 3600 + 48 * 60) * 1000).toISOString(), acknowledged: false,
       hint: "离线超过 24 小时，检查供电与 WiFi 后重新上电。",
     },
     {
       id: 6, device_code: "FG-ESP32-001", metric: "soil_moisture", label: "土壤湿度",
-      value: 69.4, threshold: demoDevices[0].thresholds.moistureMax,
-      direction: "near", level: "warn", at: new Date(DEMO_NOW - 5 * 3600000).toISOString(), acknowledged: true,
+      value: 69.4, threshold: fixtureDevices[0].thresholds.moistureMax,
+      direction: "near", level: "warn", at: new Date(FIXTURE_NOW - 5 * 3600000).toISOString(), acknowledged: true,
       hint: "接近上限，已确认：刚完成浇水。",
     },
     {
       id: 7, device_code: "FG-ESP32-002", metric: "soil_temp", label: "土壤温度",
-      value: 14.2, threshold: demoDevices[1].thresholds.tempMin,
-      direction: "below", level: "warn", at: new Date(DEMO_NOW - 19 * 3600000).toISOString(), acknowledged: true,
+      value: 14.2, threshold: fixtureDevices[1].thresholds.tempMin,
+      direction: "below", level: "warn", at: new Date(FIXTURE_NOW - 19 * 3600000).toISOString(), acknowledged: true,
       hint: "夜间低于下限，已确认：开窗通风导致。",
     },
   ];
   return list;
 })();
 
-/* ── demo state factory ───────────────────────────────────── */
+/* ── fixture state factory ─────────────────────────────────── */
 
-export function createDemoState(): AdminData {
+export function createAdminFixture(): AdminData {
   return {
-    products: structuredClone(demoProducts),
-    plants: structuredClone(demoPlants),
-    users: structuredClone(demoUsers),
-    orders: structuredClone(demoOrders),
-    devices: structuredClone(demoDevices),
-    alerts: structuredClone(demoAlerts),
+    products: structuredClone(fixtureProducts),
+    plants: structuredClone(fixturePlants),
+    users: structuredClone(fixtureUsers),
+    orders: structuredClone(fixtureOrders),
+    devices: structuredClone(fixtureDevices),
+    alerts: structuredClone(fixtureAlerts),
   };
 }
 
-export const DEMO_ADMIN: AdminUser = {
-  id: 0,
-  username: "demo",
-  email: "demo@localhost",
-  role: "admin",
-  avatar_url: null,
-};
-
-export function demoStats(days = 14): {
+export function fixtureStats(days = 14): {
   total_sales: number;
   order_count: number;
   avg_order_value: number;
   user_count: number;
 } {
-  const since = startOfDay(addDays(new Date(DEMO_NOW), -(days - 1)));
-  const orders = demoOrders.filter((o) => new Date(o.created_at) >= since);
+  const since = startOfDay(addDays(new Date(FIXTURE_NOW), -(days - 1)));
+  const orders = fixtureOrders.filter((o) => new Date(o.created_at) >= since);
   const sales = round2(orders.reduce((s, o) => s + o.total_amount, 0));
-  const users = demoUsers.filter((u) => new Date(u.created_at) >= since);
+  const users = fixtureUsers.filter((u) => new Date(u.created_at) >= since);
   return {
     total_sales: sales,
     order_count: orders.length,
@@ -447,15 +439,15 @@ export function demoStats(days = 14): {
   };
 }
 
-export function demoProductRanking(days = 14): {
+export function fixtureProductRanking(days = 14): {
   product_id: number;
   product_name: string;
   sales_count: number;
   sales_amount: number;
 }[] {
-  const since = startOfDay(addDays(new Date(DEMO_NOW), -(days - 1)));
+  const since = startOfDay(addDays(new Date(FIXTURE_NOW), -(days - 1)));
   const map = new Map<number, { product_id: number; product_name: string; sales_count: number; sales_amount: number }>();
-  demoOrders
+  fixtureOrders
     .filter((o) => ["completed", "shipped"].includes(o.status) && new Date(o.created_at) >= since)
     .forEach((o) => {
       o.items.forEach((item) => {
@@ -473,14 +465,14 @@ export function demoProductRanking(days = 14): {
   return [...map.values()].sort((a, b) => b.sales_count - a.sales_count);
 }
 
-export function demoTrend(days = 7): { labels: string[]; sales: number[]; orders: number[] } {
+export function fixtureTrend(days = 7): { labels: string[]; sales: number[]; orders: number[] } {
   const labels: string[] = [];
   const sales: number[] = [];
   const orders: number[] = [];
   for (let i = days - 1; i >= 0; i--) {
-    const day = dayKey(addDays(new Date(DEMO_NOW), -i));
+    const day = dayKey(addDays(new Date(FIXTURE_NOW), -i));
     labels.push(day);
-    const rows = demoOrders.filter((o) => dayKey(new Date(o.created_at)) === day);
+    const rows = fixtureOrders.filter((o) => dayKey(new Date(o.created_at)) === day);
     sales.push(round2(rows.reduce((s, o) => s + o.total_amount, 0)));
     orders.push(rows.length);
   }

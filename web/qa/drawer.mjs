@@ -1,4 +1,4 @@
-import { VIEWPORTS, assert, gotoAdmin, withPage } from "./lib.mjs";
+import { VIEWPORTS, adminToken, assert, gotoAdmin, withPage } from "./lib.mjs";
 
 const state = (page) =>
   page.evaluate(() => {
@@ -18,6 +18,12 @@ const state = (page) =>
 
 /** Mobile drawer: open, focus trap through `inert`, Escape, breakpoint close. */
 export async function run(browser) {
+  const token = await adminToken();
+  if (!token) {
+    console.log("drawer: skipped (set QA_ADMIN_USER and QA_ADMIN_PASSWORD to run the console chrome)");
+    return;
+  }
+
   await withPage(
     browser,
     async (page) => {
@@ -65,6 +71,7 @@ export async function run(browser) {
       assert(!resized.inert, "[drawer] .main stayed inert after resize");
     },
     VIEWPORTS.mobile,
+    { token },
   );
 
   console.log("drawer: open, inert focus guard, Escape and breakpoint close passed");

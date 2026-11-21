@@ -199,7 +199,7 @@ describe("mediaUrl", () => {
     expect(mediaUrl("/static/plants/绿萝.jpg")).toBe("http://127.0.0.1:8000/static/plants/绿萝.jpg");
   });
 
-  it("passes demo asset paths, remote urls and empty values through", () => {
+  it("passes bundled asset paths, remote urls and empty values through", () => {
     expect(mediaUrl("/assets/pothos.jpg")).toBe("/assets/pothos.jpg");
     expect(mediaUrl("https://images.unsplash.com/x.jpg")).toBe("https://images.unsplash.com/x.jpg");
     expect(mediaUrl(null)).toBeNull();

@@ -6,8 +6,8 @@
  *
  * Two deliberate differences from the legacy module:
  *  1. The legacy code read the module-level `store.data`; here the data set is
- *     always the first argument, so a selector can run over demo data, live
- *     data or a fixture without touching a global.
+ *     always the first argument, so a selector can run over live data or a
+ *     test fixture without touching a global.
  *  2. Everything that depends on "what time is it now" takes an optional
  *     `now` argument. The legacy code called `new Date()` deep inside
  *     `deviceIssues()` and `rangeStart()`; injecting `now` keeps the results

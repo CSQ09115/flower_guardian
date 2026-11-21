@@ -1,8 +1,7 @@
 /* Thin typed wrapper around the real FastAPI backend.
  *
- * Ported line by line from `legacy/admin/assets/js/api.js`. The console stays
- * usable without the backend: callers fall back to demo data when a request
- * fails.
+ * Ported line by line from `legacy/admin/assets/js/api.js`. Every call goes to
+ * the real backend; callers surface failures instead of substituting rows.
  *
  * Two small robustness additions over the legacy file, both invisible in the
  * browser: `localStorage` and `location` are accessed defensively so the
@@ -84,7 +83,7 @@ export function setToken(token: string): void {
 /* The backend stores plant photos as server-relative paths
    (`/static/plants/绿萝.jpg`). In development the console and the API live on
    different origins, so those paths must be resolved against `apiBase()`.
-   Everything else — demo `/assets/…` paths and remote https URLs — passes
+   Everything else — bundled `/assets/…` paths and remote https URLs — passes
    through untouched. */
 export function mediaUrl(value: string | null | undefined): string | null {
   if (!value) return null;

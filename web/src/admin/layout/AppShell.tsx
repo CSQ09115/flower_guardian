@@ -16,7 +16,7 @@ import { ViewErrorBoundary } from "./ViewErrorBoundary";
 export function AppShell(): JSX.Element {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isDemo, refresh, toast, resetDemo, logout } = useAdminData();
+  const { refresh, toast, logout } = useAdminData();
   const drawer = useDrawer();
   const viewRef = useRef<HTMLElement | null>(null);
   const firstRender = useRef(true);
@@ -45,41 +45,18 @@ export function AppShell(): JSX.Element {
   }, [location.pathname]);
 
   const handleRefresh = useCallback(async () => {
-    if (isDemo) {
-      // Demo mode only re-renders the current view; no toast.
-      setViewVersion((version) => version + 1);
-      return;
-    }
     try {
       await refresh();
       toast("已同步实时接口数据");
     } catch (error) {
       toast(`同步失败：${(error as Error).message}`, "error");
     }
-  }, [isDemo, refresh, toast]);
-
-  const handleConnect = useCallback(async () => {
-    if (isDemo) {
-      navigate("/login");
-      return;
-    }
-    try {
-      await refresh();
-      toast("已同步实时接口数据");
-    } catch (error) {
-      toast(`同步失败：${(error as Error).message}`, "error");
-    }
-  }, [isDemo, navigate, refresh, toast]);
+  }, [refresh, toast]);
 
   const handleExit = useCallback(() => {
-    if (isDemo) {
-      resetDemo();
-      toast("演示数据已重置");
-      return;
-    }
     logout();
-    navigate("/overview");
-  }, [isDemo, logout, navigate, resetDemo, toast]);
+    navigate("/login");
+  }, [logout, navigate]);
 
   return (
     <div className="app">
@@ -87,7 +64,7 @@ export function AppShell(): JSX.Element {
         activeName={activeName}
         sidebarRef={drawer.sidebarRef}
         onConnect={() => {
-          void handleConnect();
+          void handleRefresh();
         }}
         onExit={handleExit}
       />

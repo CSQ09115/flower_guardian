@@ -18,13 +18,13 @@ type SidebarProps = {
  * Markup and copy are ported from `renderSidebar()` in the legacy `app.js`.
  */
 export function Sidebar({ activeName, sidebarRef, onConnect, onExit }: SidebarProps): JSX.Element {
-  const { data, admin, isDemo } = useAdminData();
+  const { data, admin } = useAdminData();
   const counts: Partial<Record<RouteKey, number>> = {
     alerts: pendingAlerts(data).length,
     devices: sensorSummary(data).alarm,
   };
 
-  const name = isDemo ? "演示管理员" : admin.username || "管理员";
+  const name = admin.username || "管理员";
 
   return (
     <aside className="sidebar" id="sidebar" ref={sidebarRef}>
@@ -63,32 +63,32 @@ export function Sidebar({ activeName, sidebarRef, onConnect, onExit }: SidebarPr
 
       <div className="sidebar__foot" id="sidebar-foot">
         <div className="source-line">
-          <span className={`source-dot ${isDemo ? "is-demo" : "is-live"}`} />
+          <span className="source-dot is-live" />
           <span>数据源</span>
-          <b>{isDemo ? "演示数据" : "实时接口"}</b>
+          <b>实时接口</b>
         </div>
         <div className="sidebar__user">
           <span className="avatar">{String(name).slice(0, 1).toUpperCase()}</span>
           <span>
             <b>{name}</b>
-            <small>{isDemo ? "未连接后端" : "管理员"}</small>
+            <small>管理员</small>
           </span>
           <button
             className="icon-btn"
             type="button"
             id="foot-data"
-            aria-label={isDemo ? "连接后端" : "刷新接口数据"}
-            title={isDemo ? "连接后端" : "刷新接口数据"}
+            aria-label="刷新接口数据"
+            title="刷新接口数据"
             onClick={onConnect}
           >
-            <AdminIcon name={isDemo ? "plug" : "refresh"} size={16} />
+            <AdminIcon name="refresh" size={16} />
           </button>
           <button
             className="icon-btn icon-btn--danger"
             type="button"
             id="foot-exit"
-            aria-label={isDemo ? "以演示模式重置" : "退出登录"}
-            title={isDemo ? "重置演示数据" : "退出登录"}
+            aria-label="退出登录"
+            title="退出登录"
             onClick={onExit}
           >
             <AdminIcon name="logout" size={16} />
@@ -98,10 +98,10 @@ export function Sidebar({ activeName, sidebarRef, onConnect, onExit }: SidebarPr
           <a
             className="btn btn--ghost btn--sm"
             style={{ flex: 1, height: "29px" }}
-            href={isDemo ? "#/login" : "../index.html"}
+            href="../index.html"
           >
-            <AdminIcon name={isDemo ? "plug" : "external"} size={13} />
-            {isDemo ? "连接后端" : "查看官网"}
+            <AdminIcon name="external" size={13} />
+            查看官网
           </a>
         </div>
       </div>

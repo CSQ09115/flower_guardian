@@ -36,7 +36,7 @@ const STATUS_ITEMS = [
 ] as const;
 
 export function Overview(): JSX.Element {
-  const { data, isDemo, toast } = useAdminData();
+  const { data, toast } = useAdminData();
   const [, setVersion] = useState(0);
 
   const now = Date.now();
@@ -101,15 +101,6 @@ export function Overview(): JSX.Element {
           </button>
         </div>
       </div>
-
-      {isDemo ? (
-        <div className="note">
-          <AdminIcon name="info" size={15} />
-          <span>
-            当前展示内置演示数据，所有写操作只改动本次会话；点侧栏「连接后端」可登录真实接口。演示数值仅用于界面验证，不代表真实经营情况。
-          </span>
-        </div>
-      ) : null}
 
       <div className="kpis" style={{ marginTop: "16px" }}>
         <Kpi
@@ -288,7 +279,7 @@ export function Overview(): JSX.Element {
                       to={`/devices/${encodeURIComponent(device.code)}`}
                       style={{ display: "flex", alignItems: "center", gap: "9px", fontSize: "12px" }}
                     >
-                      <span className={`source-dot ${state === "offline" ? "" : "is-demo"}`} />
+                      <span className={`source-dot ${state === "offline" ? "" : "is-warn"}`} />
                       <span style={{ minWidth: 0 }}>
                         <b style={{ display: "block", fontSize: "12px" }}>{device.name}</b>
                         <small style={{ display: "block", color: "var(--muted-2)", fontSize: "10.5px" }}>

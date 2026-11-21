@@ -15,7 +15,7 @@ let query = "";
 let filter: "all" | "online" | "alarm" | "offline" = "all";
 
 export function Devices(): JSX.Element {
-  const { data, isDemo, toast, createDevice } = useAdminData();
+  const { data, toast, createDevice } = useAdminData();
   const [, setVersion] = useState(0);
   const [creating, setCreating] = useState(false);
   const [code, setCode] = useState("");
@@ -90,15 +90,6 @@ export function Devices(): JSX.Element {
           </button>
         </div>
       </div>
-
-      {isDemo ? (
-        <div className="note">
-          <AdminIcon name="info" size={15} />
-          <span>
-            演示设备与读数用于界面验证，不代表真实硬件。已实现传感器：土壤湿度（电容式 ADC）、光照（BH1750）；土壤温度仍是固件内的模拟曲线，接入 DS18B20 前不应作为决策依据。
-          </span>
-        </div>
-      ) : null}
 
       <div className="kpis" style={{ marginTop: "16px" }}>
         <Kpi label="设备总数" value={String(summary.total)} meta="台" icon="cpu" tone="rose" count={summary.total} />

@@ -20,8 +20,8 @@ import {
   sensorSummary,
 } from "./selectors";
 
-/* The legacy demo dataset is anchored to `DEMO_NOW = Date.now()`, so the clock
-   has to be pinned before the module is evaluated. Without this the "new users"
+/* The test fixture is anchored to `FIXTURE_NOW = Date.now()`, so the clock has
+   to be pinned before the module is evaluated. Without this the "new users"
    KPI flips between 7 and 8 depending on the hour the test happens to run. */
 let data: AdminData;
 let now: number;
@@ -29,9 +29,9 @@ let now: number;
 beforeAll(async () => {
   vi.useFakeTimers();
   vi.setSystemTime(new Date("2026-11-20T12:00:00+08:00"));
-  const demo = await import("./demo");
-  now = demo.DEMO_NOW;
-  data = demo.createDemoState();
+  const fixture = await import("./__fixtures__/adminFixture");
+  now = fixture.FIXTURE_NOW;
+  data = fixture.createAdminFixture();
   vi.useRealTimers();
 });
 
@@ -73,7 +73,7 @@ describe("computeTrend", () => {
 });
 
 describe("sensorSummary / device state", () => {
-  it("summarises the demo devices", () => {
+  it("summarises the fixture devices", () => {
     const summary = sensorSummary(data, now);
     expect(summary.total).toBe(6);
     expect(summary.online).toBe(4);
@@ -112,13 +112,13 @@ describe("status breakdown / ranking / trends", () => {
     expect(breakdown.completed + breakdown.shipped).toBeGreaterThan(0);
   });
 
-  it("ranks products like the legacy helper", async () => {
-    const demo = await import("./demo");
-    const legacy = demo.demoProductRanking(14);
+  it("ranks products like the fixture helper", async () => {
+    const fixture = await import("./__fixtures__/adminFixture");
+    const expected = fixture.fixtureProductRanking(14);
     const ranking = computeRanking(data, 14, 10, now);
-    expect(ranking[0].product_id).toBe(legacy[0].product_id);
-    expect(ranking[0].sales_count).toBe(legacy[0].sales_count);
-    expect(ranking[0].sales_amount).toBeCloseTo(legacy[0].sales_amount, 6);
+    expect(ranking[0].product_id).toBe(expected[0].product_id);
+    expect(ranking[0].sales_count).toBe(expected[0].sales_count);
+    expect(ranking[0].sales_amount).toBeCloseTo(expected[0].sales_amount, 6);
   });
 
   it("averages and divides the way the legacy charts do", () => {

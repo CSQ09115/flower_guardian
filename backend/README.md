@@ -189,6 +189,10 @@ pytest tests/
 pytest --cov=app tests/
 ```
 
+## 🗄️ 数据库初始化
+
+`app.main` 启动时会执行 `Base.metadata.create_all()` 建表，并调用 `seed_plants` 补齐 47 种植物基础数据。仓库不包含任何演示用户、设备、订单或商品种子：空库启动后业务表就是空的，后台按空态展示。
+
 ## 📝 管理员设置
 
 ```python

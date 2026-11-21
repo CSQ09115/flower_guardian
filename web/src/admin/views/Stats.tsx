@@ -550,7 +550,7 @@ export function Stats(): JSX.Element {
                 <i className="green" />
                 订单数，按小时归并
               </span>
-              <span>演示数据按本地时区生成</span>
+              <span>按本地时区归并</span>
             </div>
           </div>
         </section>

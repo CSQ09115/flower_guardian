@@ -3,7 +3,7 @@
 `web/` 是 Vite + React 18 + TypeScript 的静态站点，两个独立入口共用一个仓库：
 
 - `/` —— 产品介绍页，构建时把首屏预渲染进 `dist/index.html`，加载后 hydrate；
-- `/admin/` —— 运营后台（hash 路由单页应用），默认使用内置演示数据。
+- `/admin/` —— 运营后台（hash 路由单页应用），只读后端接口返回的 PostgreSQL 数据。
 
 没有 Next.js、没有 Tailwind、没有图表库：样式是原生 CSS，图表是手写 SVG，路由用 `react-router-dom` 6。
 
@@ -28,6 +28,13 @@ npm run qa         # Playwright + axe 回归（会先 build，再占用 4177）
 ```
 
 首次跑 QA 前安装浏览器：`npx playwright install chromium`。`npm run qa` 会探测 4177；如果开发服务器或旧的 preview 还占着端口，先停掉再跑，避免测到旧构建。
+
+后台没有登录态时会跳转登录页。QA 默认只验证登录页与「未登录访问后台会被拦下」；要跑完整的后台检查，先启动后端，再带上管理员凭据：
+
+```bash
+QA_ADMIN_USER=admin QA_ADMIN_PASSWORD='<密码>' npm run qa
+# 有设备时可再加 QA_DEVICE_CODE=FG-ESP32-001 QA_DEVICE_NAME='客厅 · 绿萝' 覆盖设备详情页
+```
 
 ## 页面与渲染方式
 
@@ -61,7 +68,7 @@ web/
 │       ├── views/            10 条路由的页面
 │       ├── ui/               共享表单、KPI、空状态等
 │       ├── charts/           手写 SVG 折线、柱状、圆环、排行、热力图
-│       ├── data/             类型、演示数据、selector、接口客户端、Provider
+│       ├── data/             类型、测试夹具、selector、接口客户端、Provider
 │       └── styles/admin.css
 ├── qa/                       Playwright + axe 回归脚本
 ├── vite.config.ts            双入口、端口 4177、base "/"
@@ -84,37 +91,22 @@ python3 -m http.server 4177 --bind 127.0.0.1
 - 后台用 hash 路由，刷新 `#/devices/FG-ESP32-001` 不会 404，不需要额外 rewrite。
 - `dist/` 里包含预渲染后的 `index.html`，禁用 JavaScript 也能读到官网正文。
 
-## 后台的两种数据源
+## 后台数据源
 
-后台默认进入**演示数据**模式：
+后台只读取后端接口返回的 PostgreSQL 数据，没有内置演示数据，也不会在失败时回退到样例行：
 
-| 模式 | 进入方式 | 说明 |
-| --- | --- | --- |
-| 演示数据 | 直接打开 `/admin/` | 内置一套标注为「演示数据」的样例，不请求网络，可完整走通所有页面与交互 |
-| 实时接口 | `/admin/#/login` 登录，或点侧栏底部「连接后端」 | 用 `role=admin` 账号读取真实 FastAPI 接口 |
-
+- 未登录打开 `/admin/` 会跳到 `#/login`；登录成功后才请求接口；
+- 接口返回 401/403 时清除本地 token 并回到登录页；
+- 后端未启动、网络失败或凭据错误只提示错误与空列表，不出现演示行；
 - 接口地址默认 `http://localhost:8000`，可用 `?api=` 覆盖，例如 `http://127.0.0.1:4177/admin/?api=http://192.168.1.10:8000#/login`；
 - 地址与令牌分别存在 `localStorage` 的 `fg_api_base` 和 `fg_admin_token`；
-- 演示模式下所有写操作只改内存 + 本地样例，不会发出请求；右上角数据源标签始终显示当前是「演示数据」还是「实时接口」；
-- 实时模式登录失败（后端未启动、账号密码不对）会给出错误提示，不会静默退回演示数据；
-- 带 token 刷新页面时仍显示「实时接口」，并在挂载后自动拉取一次接口数据；token 失效后刷新会回到演示模式并清除本地 token；
-- 列表接口的 `limit` 上限是 100，后台按 100 请求；超过会 422 并退回演示数据。
+- 列表接口的 `limit` 上限是 100，后台按 100 请求。
 
-### 演示数据口径
-
-演示数据是**样例**，不是真实经营数据，任何对外材料都不要引用（下表是前端内置演示模式的口径；接入本地后端后以种子脚本的数据为准，见下一节）：
-
-- 6 台设备 `FG-ESP32-001` … `FG-ESP32-006`，4 台在线、2 台离线；
-- 概览销售额 ¥2,333.70 / 21 单 / 客单价 ¥111.13 / 新增用户 8；
-- 订单页有效销售额 ¥2,031.70（扣掉已取消订单）；
-- 7 条告警，其中 5 条待处理；
-- 商品 12 条、植物 10 条、用户 8 位。
-
-土壤温度按固件说明取模拟值，光照允许为空（未接 BH1750 时无读数），页面用「无读数」占位而不是 0。
+后台的写操作（商品、订单状态、植物、设备阈值、告警确认）直接落库，成功后重新拉取列表。空库时各页面显示空态，这是预期结果。
 
 ### 本地后端联调（从零起一套）
 
-需要 Docker（用于 Postgres）和 `backend/venv`。整套数据都是演示数据，可随时重建：
+需要 Docker（用于 Postgres）和 `backend/venv`：
 
 ```bash
 # 1. Postgres（独立容器，不动其他项目的库）
@@ -123,28 +115,14 @@ docker run -d --name flower_guardian_db \
   -e POSTGRES_DB=flower_guardian \
   -p 5432:5432 -v flower_guardian_pgdata:/var/lib/postgresql/data postgres:16
 
-# 2. 建表并灌入演示数据（可重复执行，会重置演示数据）
+# 2. 启动接口：自动建表，并补齐 47 种植物基础数据
 cd backend
-./venv/bin/python -m app.db.seed_demo
-
-# 3. 启动接口
 ./venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-数据库连接串等配置放在 `backend/.env`（参考 `.env.example` 自行填写），不要提交。种子脚本写入的账号：
+数据库连接串等配置放在 `backend/.env`（参考 `.env.example` 自行填写），不要提交。仓库不再包含任何种子账号或演示业务数据；需要管理员时直接在 `users` 表创建 `role=admin` 的账号。
 
-| 用途 | 账号 | 密码 |
-| --- | --- | --- |
-| 后台管理员（`role=admin`） | `admin` | `FlowerAdmin#2026` |
-| 演示用户 `demo01`–`demo08` | `demo01` … `demo08` | `FlowerDemo#2026` |
-
-种子数据规模：47 种植物、12 个商品、9 位用户（1 管理员 + 8 演示用户）、21 笔订单、6 台设备（4 在线 / 2 离线）。所有记录都可识别为演示用途：用户名 `demo01`…、订单号 `DEMO` 前缀、设备名带「（演示）」后缀、备注写明 `[演示数据]`。删掉这些记录即可清空演示数据。
-
-设备在线判定窗口是 90 秒。没有真实固件在跑时，种子写入的「在线」设备 90 秒后会变离线；点击「刷新」前执行一次：
-
-```bash
-cd backend && ./venv/bin/python -m app.db.seed_demo --touch
-```
+设备在线判定窗口是 90 秒，读数来自固件上报。没有固件在跑时设备会显示离线，列表为空也是正常状态。
 
 后台登录后打开 <http://127.0.0.1:4177/admin/?api=http://127.0.0.1:8000#/login> 即可连接本机接口。
 
@@ -230,10 +208,10 @@ POST /api/devices/{code}/readings
 
 | 脚本 | 覆盖 |
 | --- | --- |
-| `smoke.mjs` | 10 条后台路由 × 1440/390：标题、h1、无 console error、无横向溢出、图片可加载 |
-| `a11y.mjs` | 同 20 组跑 axe WCAG 2.0/2.1 A+AA，要求 0 violations |
-| `drawer.mjs` | 390 抽屉：`inert` 焦点隔离、Esc 关闭、焦点归还、断点自动关闭 |
-| `motion.mjs` | `prefers-reduced-motion: reduce` 下无运行动画；默认上下文仍有动画（防止空断言） |
+| `smoke.mjs` | 未登录：8 条后台路由全部跳登录页 + 登录页 × 1440/390；已登录：8 条后台路由（可加设备详情）的标题、h1、无 console error、无横向溢出、图片可加载 |
+| `a11y.mjs` | 登录页，或登录后的全部后台路由 × 1440/390，axe WCAG 2.0/2.1 A+AA 要求 0 violations |
+| `drawer.mjs` | 登录后 390 抽屉：`inert` 焦点隔离、Esc 关闭、焦点归还、断点自动关闭（无凭据时跳过） |
+| `motion.mjs` | 登录后 `prefers-reduced-motion: reduce` 下无运行动画；默认上下文仍有动画（无凭据时跳过） |
 | `site.mjs` | 官网无 JS 首屏、导航三种关闭方式、6 张养护卡、finder、FAQ、剪贴板成功/失败、滚动 reveal |
 
 `run.mjs` 负责 build、起 `vite preview`、按脚本汇总失败并在结束时清理进程。

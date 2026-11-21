@@ -1,13 +1,15 @@
 import AxeBuilder from "@axe-core/playwright";
-import { ROUTES, VIEWPORTS, assert, gotoAdmin, withPage } from "./lib.mjs";
+import { LOGIN_ROUTE, VIEWPORTS, adminRoutes, adminToken, assert, gotoAdmin, withPage } from "./lib.mjs";
 
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
-/** axe-core AA on every admin route at both widths. */
+/** axe-core AA on the login screen and, when logged in, every console route. */
 export async function run(browser) {
+  const token = await adminToken();
+  const routes = token ? adminRoutes() : [LOGIN_ROUTE];
   let checked = 0;
 
-  for (const [route] of ROUTES) {
+  for (const [route] of routes) {
     for (const [label, viewport] of Object.entries(VIEWPORTS)) {
       await withPage(
         browser,
@@ -31,10 +33,12 @@ export async function run(browser) {
           }
         },
         viewport,
+        token ? { token } : {},
       );
       checked += 1;
     }
   }
 
-  console.log(`a11y: ${checked} route/viewport combinations passed (axe ${TAGS.join(", ")})`);
+  const mode = token ? "logged in" : "logged out";
+  console.log(`a11y: ${checked} route/viewport combinations passed (${mode}, axe ${TAGS.join(", ")})`);
 }

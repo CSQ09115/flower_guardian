@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { AdminIcon } from "../icons";
 import { routeTitle } from "../routes";
 import type { RouteKey } from "../routes";
-import { useAdminData } from "../data/store";
 
 type TopbarProps = {
   activeName: RouteKey | "login";
@@ -14,8 +13,6 @@ type TopbarProps = {
 
 /** Page chrome: menu button, breadcrumb, data-source pill and refresh button. */
 export function Topbar({ activeName, open, onToggle, onRefresh, triggerRef }: TopbarProps): JSX.Element {
-  const { isDemo } = useAdminData();
-
   return (
     <header className="topbar">
       <button
@@ -37,8 +34,8 @@ export function Topbar({ activeName, open, onToggle, onRefresh, triggerRef }: To
       </div>
       <div className="topbar__actions">
         <span className="source-pill" id="source-pill">
-          <span className={`source-dot ${isDemo ? "is-demo" : "is-live"}`} />
-          {isDemo ? "演示数据" : "实时接口"}
+          <span className="source-dot is-live" />
+          实时接口
         </span>
         <button
           className="icon-btn"

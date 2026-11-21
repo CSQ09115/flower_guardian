@@ -32,7 +32,7 @@ const daylightNow = (): boolean => {
 export function DeviceDetail(): JSX.Element {
   const params = useParams();
   const code = decodeURIComponent(params.code ?? "");
-  const { data, isDemo, toast, saveDevice, loadDevice } = useAdminData();
+  const { data, toast, saveDevice, loadDevice } = useAdminData();
   const [, setVersion] = useState(0);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
@@ -40,11 +40,11 @@ export function DeviceDetail(): JSX.Element {
   const [thresholds, setThresholds] = useState<Thresholds | null>(null);
   const [calibration, setCalibration] = useState<{ airRaw: string; waterRaw: string } | null>(null);
 
-  /* The list endpoint only returns the latest reading. In live mode pull the
-     detail endpoint so the 24h curve and the readings table have history. */
+  /* The list endpoint only returns the latest reading. Pull the detail endpoint
+     so the 24h curve and the readings table have history. */
   useEffect(() => {
-    if (!isDemo) void loadDevice(code);
-  }, [code, isDemo, loadDevice]);
+    void loadDevice(code);
+  }, [code, loadDevice]);
 
   const device = data.devices.find((row) => row.code === code);
   const rerender = (): void => setVersion((version) => version + 1);
@@ -221,15 +221,6 @@ export function DeviceDetail(): JSX.Element {
           </button>
         </div>
       </div>
-
-      {isDemo ? (
-        <div className="note">
-          <AdminIcon name="info" size={15} />
-          <span>
-            演示设备：读数为固定种子生成的 24 小时曲线，阈值修改与告警确认只保存在本次会话。土壤温度仍是固件内的模拟值。
-          </span>
-        </div>
-      ) : null}
 
       <section className="device-hero" style={{ marginTop: "16px" }}>
         <span className="device-hero__icon">
@@ -419,12 +410,6 @@ export function DeviceDetail(): JSX.Element {
                   </>
                 ) : null}
               </div>
-              {isDemo ? (
-                <div className="note" style={{ marginTop: "12px" }}>
-                  <AdminIcon name="info" size={14} />
-                  <span>演示曲线每 10 分钟一个点；真实固件每 10 秒上报一次，后端按小时聚合后再绘制。</span>
-                </div>
-              ) : null}
             </div>
           </section>
           <SummaryCard rows={window24} />

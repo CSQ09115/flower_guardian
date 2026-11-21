@@ -1,15 +1,10 @@
-/* Application state for the admin console: demo data by default, real API
- * after a successful login.
+/* Application state for the admin console. Every row comes from the
+ * PostgreSQL-backed API; the console has no offline dataset and never falls
+ * back to sample rows.
  *
- * Ported from `legacy/admin/assets/js/store.js` (lines 1–100 and 300–429).
- * Differences from the legacy module, all required by the React port:
- *  - the data set lives in React state instead of a module-level `store` object;
- *  - `notify()` became the provider's toast queue (max 4, 3800ms);
- *  - `refreshView()` is unnecessary — state updates re-render on their own.
- *
- * Everything else is unchanged: the same six parallel requests, the same
- * tolerant device/alert shapes, the same demo-mode wording, the same
- * "demo toast first, view toast second" behaviour.
+ * A stored token starts the session optimistically, then the first `loadLive()`
+ * either fills the store or, on 401/403, clears the token and sends the user
+ * back to the login screen.
  */
 
 import {
@@ -25,7 +20,6 @@ import type { ReactNode } from "react";
 import type { ToastItem, ToastTone } from "../../shared/components/Toast";
 import { api } from "./api";
 import { getToken, setToken } from "./api";
-import { DEMO_ADMIN, createDemoState } from "./demo";
 import type {
   AdminData,
   AdminUser,
@@ -42,8 +36,8 @@ import type {
 } from "./types";
 
 export type AdminDataValue = {
-  source: "demo" | "live";
-  isDemo: boolean;
+  /** False once the token is missing, rejected, or cleared by `logout()`. */
+  signedIn: boolean;
   admin: AdminUser;
   data: AdminData;
   lastSync: number;
@@ -55,7 +49,6 @@ export type AdminDataValue = {
   loadLive: () => Promise<boolean>;
   loadDevice: (code: string) => Promise<void>;
   logout: () => void;
-  resetDemo: () => void;
   saveProduct: (payload: ProductInput, id?: number) => Promise<void>;
   removeProduct: (id: number) => Promise<void>;
   saveOrder: (id: number, payload: OrderPatch) => Promise<void>;
@@ -66,13 +59,24 @@ export type AdminDataValue = {
   acknowledgeAlert: (id: number) => Promise<void>;
 };
 
-/* ── normalisers (legacy `store.js` lines 84–122) ───────────── */
+export const EMPTY_DATA: AdminData = {
+  products: [],
+  plants: [],
+  users: [],
+  orders: [],
+  devices: [],
+  alerts: [],
+};
+
+const EMPTY_ADMIN: AdminUser = { id: 0, username: "", role: "admin", avatar_url: null };
+
+/* ── normalisers ────────────────────────────────────────────── */
 
 /* FastAPI serialises the backend's naive `datetime.utcnow()` values without a
    timezone (`2026-11-21T02:00:00`). `new Date()` would read that as local time,
-   shifting every live row by the UTC offset — and marking every device offline,
+   shifting every row by the UTC offset — and marking every device offline,
    because `last_seen` would look hours old. Tag the string as UTC so the rest
-   of the console parses it correctly. Demo rows already end in `Z`. */
+   of the console parses it correctly. */
 const utcStamp = (value: string): string =>
   typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(value)
     ? `${value}Z`
@@ -173,124 +177,6 @@ export const normalizeAlert = (row: RawAlert): Alert => ({
   acknowledged: Boolean(row.acknowledged),
 });
 
-/* ── demo-mode mutations (legacy `store.js` lines 300–429) ──── */
-
-export const DEMO_TOAST = {
-  saveProduct: "演示模式：商品修改仅保存在当前会话",
-  removeProduct: "演示模式：商品已从当前会话移除",
-  saveOrder: "演示模式：订单状态仅保存在当前会话",
-  savePlant: "演示模式：植物条目仅保存在当前会话",
-  removePlant: "演示模式：植物条目已移除",
-  saveDevice: "演示模式：设备配置仅保存在当前会话",
-  createDevice: "演示模式：设备档案仅保存在当前会话",
-  acknowledgeAlert: "演示模式：告警已确认",
-} as const;
-
-export function applySaveProduct(data: AdminData, payload: ProductInput, id?: number): AdminData {
-  const stamp = new Date().toISOString();
-  if (id) {
-    return {
-      ...data,
-      products: data.products.map((row) =>
-        row.id === id ? { ...row, ...payload, updated_at: stamp } : row,
-      ),
-    };
-  }
-  const next = Math.max(0, ...data.products.map((row) => row.id)) + 1;
-  const row: Product = {
-    id: next,
-    created_at: stamp,
-    updated_at: stamp,
-    ...payload,
-    // The legacy demo row simply had no `image_url`; `null` is the same value
-    // the live API returns for a product without a picture.
-    image_url: payload.image_url ?? null,
-  };
-  return { ...data, products: [row, ...data.products] };
-}
-
-export function applyRemoveProduct(data: AdminData, id: number): AdminData {
-  return { ...data, products: data.products.filter((row) => row.id !== id) };
-}
-
-export function applySaveOrder(data: AdminData, id: number, payload: OrderPatch): AdminData {
-  const stamp = new Date().toISOString();
-  return {
-    ...data,
-    orders: data.orders.map((row) => (row.id === id ? { ...row, ...payload, updated_at: stamp } : row)),
-  };
-}
-
-export function applySavePlant(data: AdminData, payload: PlantInput, id?: number): AdminData {
-  if (id) {
-    return {
-      ...data,
-      plants: data.plants.map((row) => (row.id === id ? { ...row, ...payload } : row)),
-    };
-  }
-  const next = Math.max(0, ...data.plants.map((row) => row.id)) + 1;
-  const row: Plant = {
-    id: next,
-    created_at: new Date().toISOString(),
-    ...payload,
-  } as Plant;
-  return { ...data, plants: [row, ...data.plants] };
-}
-
-export function applyRemovePlant(data: AdminData, id: number): AdminData {
-  return { ...data, plants: data.plants.filter((row) => row.id !== id) };
-}
-
-export function applySaveDevice(data: AdminData, code: string, payload: Partial<Device>): AdminData {
-  return {
-    ...data,
-    devices: data.devices.map((row) => {
-      if (row.code !== code) return row;
-      const next: Device = { ...row, ...payload };
-      if (payload.thresholds) next.thresholds = { ...payload.thresholds };
-      if (payload.calibration) next.calibration = { ...payload.calibration };
-      return next;
-    }),
-  };
-}
-
-export function applyCreateDevice(
-  data: AdminData,
-  payload: { code: string; name: string; location: string },
-): AdminData {
-  const row: Device = {
-    id: Math.max(0, ...data.devices.map((d) => d.id)) + 1,
-    code: payload.code,
-    name: payload.name,
-    location: payload.location,
-    firmware: "—",
-    ip_address: null,
-    report_interval: 10,
-    enabled: true,
-    last_seen: null,
-    created_at: new Date().toISOString(),
-    thresholds: {
-      moistureMin: 35,
-      moistureMax: 70,
-      tempMin: 12,
-      tempMax: 30,
-      luxMin: 500,
-      luxMax: 30000,
-      alarm: true,
-    },
-    calibration: { airRaw: 3200, waterRaw: 1300, source: "出厂默认" },
-    readings: [],
-  };
-  return { ...data, devices: [...data.devices, row] };
-}
-
-export function applyAcknowledgeAlert(data: AdminData, id: number): AdminData {
-  return {
-    ...data,
-    alerts: data.alerts.map((row) => (row.id === id ? { ...row, acknowledged: true } : row)),
-  };
-}
-
 /* ── toast queue ─────────────────────────────────────────────── */
 
 let toastId = 0;
@@ -317,13 +203,15 @@ export const TOAST_LIFETIME_MS = 3800;
 
 const AdminDataContext = createContext<AdminDataValue | null>(null);
 
+const isAuthError = (error: unknown): boolean => {
+  const status = (error as { status?: number }).status;
+  return status === 401 || status === 403;
+};
+
 export function useAdminDataStore(): AdminDataValue {
-  // Legacy `store.source` starts from the token: a stored token means the
-  // console was in live mode before. The data itself is always the demo set
-  // until `loadLive()` succeeds.
-  const [source, setSource] = useState<"demo" | "live">(() => (getToken() ? "live" : "demo"));
-  const [data, setData] = useState<AdminData>(() => createDemoState());
-  const [admin, setAdmin] = useState<AdminUser>(DEMO_ADMIN);
+  const [signedIn, setSignedIn] = useState<boolean>(() => Boolean(getToken()));
+  const [data, setData] = useState<AdminData>(EMPTY_DATA);
+  const [admin, setAdmin] = useState<AdminUser>(EMPTY_ADMIN);
   const [lastSync, setLastSync] = useState(0);
   const [syncing, setSyncing] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
@@ -352,18 +240,21 @@ export function useAdminDataStore(): AdminDataValue {
     [],
   );
 
-  const resetDemo = useCallback(() => {
-    setData(createDemoState());
-    setAdmin(DEMO_ADMIN);
-    setLastSync(Date.now());
+  /** Drops the session so the route guard can bounce to `/login`. */
+  const signOut = useCallback(() => {
+    setToken("");
+    setSignedIn(false);
+    setData(EMPTY_DATA);
+    setAdmin(EMPTY_ADMIN);
+    setLastSync(0);
   }, []);
 
   const loadLive = useCallback(async () => {
     setSyncing(true);
     try {
-      /* The backend caps every list endpoint at `limit<=100`; asking for 200
-         returns 422 and the console silently falls back to demo data. */
-      const [me, products, orders, users, plants, devices] = await Promise.all([
+      /* The backend caps every list endpoint at `limit<=100`, so asking for
+         more returns 422. */
+      const [me, products, orders, users, plants, devicesResult] = await Promise.all([
         api.me(),
         api.products(100),
         api.orders(100),
@@ -371,46 +262,43 @@ export function useAdminDataStore(): AdminDataValue {
         api.plants(100),
         api.devices().catch(() => null),
       ]);
+      const devices = devicesResult
+        ? Array.isArray(devicesResult)
+          ? devicesResult
+          : devicesResult.items ?? []
+        : [];
+      let alerts: Alert[] = [];
+      if (devicesResult) {
+        const alertsResult = await api.deviceAlerts().catch(() => null);
+        if (alertsResult) {
+          const list = Array.isArray(alertsResult) ? alertsResult : alertsResult.items ?? [];
+          alerts = list.map(normalizeAlert);
+        }
+      }
       setAdmin(me);
-      setData((prev) => ({
-        ...prev,
+      setData({
         products: (products.items || []).map(normalizeProduct),
         orders: (orders.items || []).map(normalizeOrder),
         users: (users.items || []).map(normalizeUser),
         plants: (plants.items || []).map(normalizePlant),
-      }));
-      if (devices) {
-        const rows = Array.isArray(devices) ? devices : devices.items ?? [];
-        setData((prev) => ({ ...prev, devices: rows.map(normalizeDevice) }));
-        const alerts = await api.deviceAlerts().catch(() => null);
-        if (alerts) {
-          const list = Array.isArray(alerts) ? alerts : alerts.items ?? [];
-          setData((prev) => ({ ...prev, alerts: list.map(normalizeAlert) }));
-        }
-      } else {
-        setData((prev) => ({ ...prev, devices: [], alerts: [] }));
-      }
-      setSource("live");
+        devices: devices.map(normalizeDevice),
+        alerts,
+      });
+      setSignedIn(true);
       setLastSync(Date.now());
       return true;
     } catch (error) {
-      const status = (error as { status?: number }).status;
-      if (status === 401 || status === 403) {
-        setToken("");
-        setSource("demo");
-        resetDemo();
-      }
+      if (isAuthError(error)) signOut();
       throw error;
     } finally {
       setSyncing(false);
     }
-  }, [resetDemo]);
+  }, [signOut]);
 
   /* The device list only carries the latest point; the detail page needs the
      full 24h history. Fetch it on demand and merge it into the same store. */
   const loadDevice = useCallback(
     async (code: string) => {
-      if (source === "demo") return;
       try {
         const row = await api.device(code);
         setData((prev) => ({
@@ -420,165 +308,113 @@ export function useAdminDataStore(): AdminDataValue {
           ),
         }));
       } catch (error) {
-        const status = (error as { status?: number }).status;
-        if (status === 401 || status === 403) {
-          setToken("");
-          setSource("demo");
-          resetDemo();
+        if (isAuthError(error)) {
+          signOut();
           return;
         }
         /* Network hiccup: keep the list snapshot instead of blanking the page. */
       }
     },
-    [source, resetDemo],
+    [signOut],
   );
 
   const refresh = useCallback(async () => {
-    if (source === "demo") {
-      resetDemo();
-      return;
-    }
     await loadLive();
-  }, [source, resetDemo, loadLive]);
+  }, [loadLive]);
 
-  /* A stored token starts the console in live mode, but the data set is the
-     demo snapshot until the first response arrives. Pull once on mount so a
-     page reload doesn't show demo rows under a「实时接口」pill. */
+  /* Restore the session from the stored token on mount. */
   useEffect(() => {
     if (!getToken()) return;
     void loadLive().catch((error) => {
-      const status = (error as { status?: number }).status;
-      if (status !== 401 && status !== 403) setSource("demo");
+      if (!isAuthError(error)) {
+        toast(`同步失败：${(error as Error).message}`, "error");
+      }
     });
-  }, [loadLive]);
+  }, [loadLive, toast]);
 
   const logout = useCallback(() => {
-    setToken("");
-    setSource("demo");
-    setAdmin(DEMO_ADMIN);
-    resetDemo();
-  }, [resetDemo]);
+    signOut();
+  }, [signOut]);
 
   const saveProduct = useCallback(
     async (payload: ProductInput, id?: number) => {
-      if (source === "demo") {
-        setData((prev) => applySaveProduct(prev, payload, id));
-        toast(DEMO_TOAST.saveProduct);
-        return;
-      }
       if (id) await api.updateProduct(id, payload);
       else await api.createProduct(payload);
       await loadLive();
       toast(id ? "商品已保存" : "商品已创建");
     },
-    [source, toast, loadLive],
+    [toast, loadLive],
   );
 
   const removeProduct = useCallback(
     async (id: number) => {
-      if (source === "demo") {
-        setData((prev) => applyRemoveProduct(prev, id));
-        toast(DEMO_TOAST.removeProduct);
-        return;
-      }
       await api.deleteProduct(id);
       await loadLive();
       toast("商品已删除");
     },
-    [source, toast, loadLive],
+    [toast, loadLive],
   );
 
   const saveOrder = useCallback(
     async (id: number, payload: OrderPatch) => {
-      if (source === "demo") {
-        setData((prev) => applySaveOrder(prev, id, payload));
-        toast(DEMO_TOAST.saveOrder);
-        return;
-      }
       await api.updateOrder(id, payload);
       await loadLive();
       toast("订单已更新");
     },
-    [source, toast, loadLive],
+    [toast, loadLive],
   );
 
   const savePlant = useCallback(
     async (payload: PlantInput, id?: number) => {
-      if (source === "demo") {
-        setData((prev) => applySavePlant(prev, payload, id));
-        toast(DEMO_TOAST.savePlant);
-        return;
-      }
       if (id) await api.updatePlant(id, payload);
       else await api.createPlant(payload);
       await loadLive();
       toast(id ? "植物条目已保存" : "植物条目已创建");
     },
-    [source, toast, loadLive],
+    [toast, loadLive],
   );
 
   const removePlant = useCallback(
     async (id: number) => {
-      if (source === "demo") {
-        setData((prev) => applyRemovePlant(prev, id));
-        toast(DEMO_TOAST.removePlant);
-        return;
-      }
       await api.deletePlant(id);
       await loadLive();
       toast("植物条目已删除");
     },
-    [source, toast, loadLive],
+    [toast, loadLive],
   );
 
   const saveDevice = useCallback(
     async (code: string, payload: Partial<Device>) => {
-      if (source === "demo") {
-        setData((prev) => applySaveDevice(prev, code, payload));
-        toast(DEMO_TOAST.saveDevice);
-        return;
-      }
       await api.updateDevice(code, payload);
       /* Re-fetch the detail so the 24h curve survives the update response,
          which only carries the device profile. */
       await loadDevice(code);
       toast("设备配置已保存");
     },
-    [source, toast, loadDevice],
+    [toast, loadDevice],
   );
 
   const createDevice = useCallback(
     async (payload: { code: string; name: string; location: string }) => {
-      if (source === "demo") {
-        setData((prev) => applyCreateDevice(prev, payload));
-        toast(DEMO_TOAST.createDevice);
-        return;
-      }
       await api.createDevice(payload);
       await loadLive();
       toast("设备档案已创建");
     },
-    [source, toast, loadLive],
+    [toast, loadLive],
   );
 
   const acknowledgeAlert = useCallback(
     async (id: number) => {
-      if (source === "demo") {
-        setData((prev) => applyAcknowledgeAlert(prev, id));
-        toast(DEMO_TOAST.acknowledgeAlert);
-        return;
-      }
       await api.acknowledgeAlert(id);
       await loadLive();
       toast("告警已确认");
     },
-    [source, toast, loadLive],
+    [toast, loadLive],
   );
 
   const value = useMemo<AdminDataValue>(
     () => ({
-      source,
-      isDemo: source === "demo",
+      signedIn,
       admin,
       data,
       lastSync,
@@ -590,7 +426,6 @@ export function useAdminDataStore(): AdminDataValue {
       loadLive,
       loadDevice,
       logout,
-      resetDemo,
       saveProduct,
       removeProduct,
       saveOrder,
@@ -601,7 +436,7 @@ export function useAdminDataStore(): AdminDataValue {
       acknowledgeAlert,
     }),
     [
-      source,
+      signedIn,
       admin,
       data,
       lastSync,
@@ -613,7 +448,6 @@ export function useAdminDataStore(): AdminDataValue {
       loadLive,
       loadDevice,
       logout,
-      resetDemo,
       saveProduct,
       removeProduct,
       saveOrder,

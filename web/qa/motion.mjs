@@ -1,4 +1,4 @@
-import { BASE, assert, gotoAdmin, withPage } from "./lib.mjs";
+import { BASE, adminToken, assert, gotoAdmin, withPage } from "./lib.mjs";
 
 const animations = (page) =>
   page.evaluate(() => {
@@ -12,6 +12,12 @@ const animations = (page) =>
 
 /** Reduced motion must stop every animation; the default context must still animate. */
 export async function run(browser) {
+  const token = await adminToken();
+  if (!token) {
+    console.log("motion: skipped (set QA_ADMIN_USER and QA_ADMIN_PASSWORD to run the console chrome)");
+    return;
+  }
+
   await withPage(browser, async (page) => {
     await gotoAdmin(page, "overview");
     await page.waitForTimeout(200);
@@ -21,7 +27,7 @@ export async function run(browser) {
       state.running === 0,
       `[motion] ${state.running} animation(s) still running with reduced motion (${state.total} tracked)`,
     );
-  }, undefined, { reducedMotion: "reduce" });
+  }, undefined, { reducedMotion: "reduce", token });
 
   await withPage(browser, async (page) => {
     await page.goto(`${BASE}/admin/#/overview`, { waitUntil: "domcontentloaded" });
@@ -40,7 +46,7 @@ export async function run(browser) {
       state.running > 0,
       `[motion] no animation is running in the default context (${state.total} tracked) — the reduced-motion assertion would be vacuous`,
     );
-  });
+  }, undefined, { token });
 
   console.log("motion: reduced motion stops animations; default context still animates");
 }
