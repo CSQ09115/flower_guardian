@@ -228,7 +228,7 @@ export function Stats(): JSX.Element {
       </div>
 
       <section className="card">
-        <div className="toolbar">
+        <div className="toolbar toolbar--fields">
           <div className="field" style={{ minWidth: "150px" }}>
             <label htmlFor="st-start">开始日期</label>
             <input

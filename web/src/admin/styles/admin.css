@@ -578,6 +578,13 @@ table { border-collapse: collapse; width: 100%; }
   border-bottom: 1px solid var(--line);
 }
 
+/* Filter rows with labelled fields: labels sit above their control, so every
+   control has to share one bottom edge or the presets float above the inputs. */
+.toolbar--fields { align-items: flex-end; }
+.toolbar--fields .segmented button { height: 27px; }
+.toolbar--fields .chip,
+.toolbar--fields .btn { height: 35px; }
+
 .search {
   position: relative;
   flex: 1 1 220px;
@@ -1278,6 +1285,17 @@ table { border-collapse: collapse; width: 100%; }
 }
 
 .field label .icon { width: 13px; height: 13px; color: var(--muted-2); }
+
+/* A visible label without a control to point at (the segmented group is
+   labelled by its own aria-label) still occupies the same label row. */
+.field__label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.6;
+}
 
 .field .input, .field .select { height: 35px; font-size: 12.5px; }
 
