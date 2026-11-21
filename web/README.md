@@ -97,11 +97,12 @@ python3 -m http.server 4177 --bind 127.0.0.1
 - 地址与令牌分别存在 `localStorage` 的 `fg_api_base` 和 `fg_admin_token`；
 - 演示模式下所有写操作只改内存 + 本地样例，不会发出请求；右上角数据源标签始终显示当前是「演示数据」还是「实时接口」；
 - 实时模式登录失败（后端未启动、账号密码不对）会给出错误提示，不会静默退回演示数据；
-- 带 token 刷新页面时仍显示「实时接口」，数据先回到演示值，点刷新后再拉取；token 失效后刷新会回到演示模式。
+- 带 token 刷新页面时仍显示「实时接口」，并在挂载后自动拉取一次接口数据；token 失效后刷新会回到演示模式并清除本地 token；
+- 列表接口的 `limit` 上限是 100，后台按 100 请求；超过会 422 并退回演示数据。
 
 ### 演示数据口径
 
-演示数据是**样例**，不是真实经营数据，任何对外材料都不要引用：
+演示数据是**样例**，不是真实经营数据，任何对外材料都不要引用（下表是前端内置演示模式的口径；接入本地后端后以种子脚本的数据为准，见下一节）：
 
 - 6 台设备 `FG-ESP32-001` … `FG-ESP32-006`，4 台在线、2 台离线；
 - 概览销售额 ¥2,333.70 / 21 单 / 客单价 ¥111.13 / 新增用户 8；
@@ -110,6 +111,42 @@ python3 -m http.server 4177 --bind 127.0.0.1
 - 商品 12 条、植物 10 条、用户 8 位。
 
 土壤温度按固件说明取模拟值，光照允许为空（未接 BH1750 时无读数），页面用「无读数」占位而不是 0。
+
+### 本地后端联调（从零起一套）
+
+需要 Docker（用于 Postgres）和 `backend/venv`。整套数据都是演示数据，可随时重建：
+
+```bash
+# 1. Postgres（独立容器，不动其他项目的库）
+docker run -d --name flower_guardian_db \
+  -e POSTGRES_USER=flower -e POSTGRES_PASSWORD=flower \
+  -e POSTGRES_DB=flower_guardian \
+  -p 5432:5432 -v flower_guardian_pgdata:/var/lib/postgresql/data postgres:16
+
+# 2. 建表并灌入演示数据（可重复执行，会重置演示数据）
+cd backend
+./venv/bin/python -m app.db.seed_demo
+
+# 3. 启动接口
+./venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+```
+
+数据库连接串等配置放在 `backend/.env`（参考 `.env.example` 自行填写），不要提交。种子脚本写入的账号：
+
+| 用途 | 账号 | 密码 |
+| --- | --- | --- |
+| 后台管理员（`role=admin`） | `admin` | `FlowerAdmin#2026` |
+| 演示用户 `demo01`–`demo08` | `demo01` … `demo08` | `FlowerDemo#2026` |
+
+种子数据规模：47 种植物、12 个商品、9 位用户（1 管理员 + 8 演示用户）、21 笔订单、6 台设备（4 在线 / 2 离线）。所有记录都可识别为演示用途：用户名 `demo01`…、订单号 `DEMO` 前缀、设备名带「（演示）」后缀、备注写明 `[演示数据]`。删掉这些记录即可清空演示数据。
+
+设备在线判定窗口是 90 秒。没有真实固件在跑时，种子写入的「在线」设备 90 秒后会变离线；点击「刷新」前执行一次：
+
+```bash
+cd backend && ./venv/bin/python -m app.db.seed_demo --touch
+```
+
+后台登录后打开 <http://127.0.0.1:4177/admin/?api=http://127.0.0.1:8000#/login> 即可连接本机接口。
 
 ## 固件接入
 

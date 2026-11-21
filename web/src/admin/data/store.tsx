@@ -37,6 +37,7 @@ import type {
   PlantInput,
   Product,
   ProductInput,
+  Reading,
   User,
 } from "./types";
 
@@ -52,6 +53,7 @@ export type AdminDataValue = {
   dismissToast: (id: number) => void;
   refresh: () => Promise<void>;
   loadLive: () => Promise<boolean>;
+  loadDevice: (code: string) => Promise<void>;
   logout: () => void;
   resetDemo: () => void;
   saveProduct: (payload: ProductInput, id?: number) => Promise<void>;
@@ -66,19 +68,42 @@ export type AdminDataValue = {
 
 /* ── normalisers (legacy `store.js` lines 84–122) ───────────── */
 
+/* FastAPI serialises the backend's naive `datetime.utcnow()` values without a
+   timezone (`2026-11-21T02:00:00`). `new Date()` would read that as local time,
+   shifting every live row by the UTC offset — and marking every device offline,
+   because `last_seen` would look hours old. Tag the string as UTC so the rest
+   of the console parses it correctly. Demo rows already end in `Z`. */
+const utcStamp = (value: string): string =>
+  typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(value)
+    ? `${value}Z`
+    : value;
+
+const normalizeReading = (row: Reading): Reading => ({
+  ...row,
+  created_at: utcStamp(row.created_at),
+});
+
 const normalizeProduct = (row: Product): Product => ({
   ...row,
   price: Number(row.price || 0),
   stock: Number(row.stock || 0),
+  created_at: utcStamp(row.created_at),
+  updated_at: utcStamp(row.updated_at),
 });
 
-const normalizeUser = (row: User): User => ({ ...row });
+const normalizeUser = (row: User): User => ({ ...row, created_at: utcStamp(row.created_at) });
 
-const normalizePlant = (row: Plant): Plant => ({ ...row, care_level: Number(row.care_level || 1) });
+const normalizePlant = (row: Plant): Plant => ({
+  ...row,
+  care_level: Number(row.care_level || 1),
+  created_at: utcStamp(row.created_at),
+});
 
 const normalizeOrder = (row: Order): Order => ({
   ...row,
   total_amount: Number(row.total_amount || 0),
+  created_at: utcStamp(row.created_at),
+  updated_at: utcStamp(row.updated_at),
   items: (row.items || []).map((item) => ({
     ...item,
     unit_price: Number(item.unit_price || 0),
@@ -110,29 +135,41 @@ type RawDevice = Omit<Device, "thresholds" | "calibration" | "readings" | "last_
 
 type RawAlert = Alert & { created_at?: string };
 
-export const normalizeDevice = (row: RawDevice): Device => ({
-  ...row,
-  thresholds: row.thresholds || row.threshold || {
-    moistureMin: Number(row.moisture_min ?? 35),
-    moistureMax: Number(row.moisture_max ?? 70),
-    tempMin: Number(row.temp_min ?? 12),
-    tempMax: Number(row.temp_max ?? 30),
-    luxMin: Number(row.lux_min ?? 500),
-    luxMax: Number(row.lux_max ?? 30000),
-    alarm: row.alarm_enabled !== false,
-  },
-  calibration: row.calibration || {
-    airRaw: row.air_raw ?? 3200,
-    waterRaw: row.water_raw ?? 1300,
-    source: "NVS soil-cal",
-  },
-  readings: row.readings || (row.latest_reading ? [row.latest_reading] : []),
-  last_seen: row.last_seen || row.last_seen_at || null,
-});
+export const normalizeDevice = (row: RawDevice): Device => {
+  /* The list endpoint returns `readings: []` plus a `latest_reading`, so an
+     empty array must not shadow the latest point. The detail endpoint returns
+     the full 24h history in `readings`. */
+  const readings =
+    row.readings && row.readings.length
+      ? row.readings
+      : row.latest_reading
+        ? [row.latest_reading]
+        : [];
+
+  return {
+    ...row,
+    thresholds: row.thresholds || row.threshold || {
+      moistureMin: Number(row.moisture_min ?? 35),
+      moistureMax: Number(row.moisture_max ?? 70),
+      tempMin: Number(row.temp_min ?? 12),
+      tempMax: Number(row.temp_max ?? 30),
+      luxMin: Number(row.lux_min ?? 500),
+      luxMax: Number(row.lux_max ?? 30000),
+      alarm: row.alarm_enabled !== false,
+    },
+    calibration: row.calibration || {
+      airRaw: row.air_raw ?? 3200,
+      waterRaw: row.water_raw ?? 1300,
+      source: "NVS soil-cal",
+    },
+    readings: readings.map(normalizeReading),
+    last_seen: utcStamp(row.last_seen || row.last_seen_at || "") || null,
+  };
+};
 
 export const normalizeAlert = (row: RawAlert): Alert => ({
   ...row,
-  at: row.at || row.created_at || "",
+  at: utcStamp(row.at || row.created_at || ""),
   acknowledged: Boolean(row.acknowledged),
 });
 
@@ -324,12 +361,14 @@ export function useAdminDataStore(): AdminDataValue {
   const loadLive = useCallback(async () => {
     setSyncing(true);
     try {
+      /* The backend caps every list endpoint at `limit<=100`; asking for 200
+         returns 422 and the console silently falls back to demo data. */
       const [me, products, orders, users, plants, devices] = await Promise.all([
         api.me(),
-        api.products(200),
-        api.orders(200),
-        api.users(200),
-        api.plants(200),
+        api.products(100),
+        api.orders(100),
+        api.users(100),
+        api.plants(100),
         api.devices().catch(() => null),
       ]);
       setAdmin(me);
@@ -367,6 +406,33 @@ export function useAdminDataStore(): AdminDataValue {
     }
   }, [resetDemo]);
 
+  /* The device list only carries the latest point; the detail page needs the
+     full 24h history. Fetch it on demand and merge it into the same store. */
+  const loadDevice = useCallback(
+    async (code: string) => {
+      if (source === "demo") return;
+      try {
+        const row = await api.device(code);
+        setData((prev) => ({
+          ...prev,
+          devices: prev.devices.map((device) =>
+            device.code === code ? normalizeDevice(row as RawDevice) : device,
+          ),
+        }));
+      } catch (error) {
+        const status = (error as { status?: number }).status;
+        if (status === 401 || status === 403) {
+          setToken("");
+          setSource("demo");
+          resetDemo();
+          return;
+        }
+        /* Network hiccup: keep the list snapshot instead of blanking the page. */
+      }
+    },
+    [source, resetDemo],
+  );
+
   const refresh = useCallback(async () => {
     if (source === "demo") {
       resetDemo();
@@ -374,6 +440,17 @@ export function useAdminDataStore(): AdminDataValue {
     }
     await loadLive();
   }, [source, resetDemo, loadLive]);
+
+  /* A stored token starts the console in live mode, but the data set is the
+     demo snapshot until the first response arrives. Pull once on mount so a
+     page reload doesn't show demo rows under a「实时接口」pill. */
+  useEffect(() => {
+    if (!getToken()) return;
+    void loadLive().catch((error) => {
+      const status = (error as { status?: number }).status;
+      if (status !== 401 && status !== 403) setSource("demo");
+    });
+  }, [loadLive]);
 
   const logout = useCallback(() => {
     setToken("");
@@ -462,10 +539,12 @@ export function useAdminDataStore(): AdminDataValue {
         return;
       }
       await api.updateDevice(code, payload);
-      await loadLive();
+      /* Re-fetch the detail so the 24h curve survives the update response,
+         which only carries the device profile. */
+      await loadDevice(code);
       toast("设备配置已保存");
     },
-    [source, toast, loadLive],
+    [source, toast, loadDevice],
   );
 
   const createDevice = useCallback(
@@ -509,6 +588,7 @@ export function useAdminDataStore(): AdminDataValue {
       dismissToast,
       refresh,
       loadLive,
+      loadDevice,
       logout,
       resetDemo,
       saveProduct,
@@ -531,6 +611,7 @@ export function useAdminDataStore(): AdminDataValue {
       dismissToast,
       refresh,
       loadLive,
+      loadDevice,
       logout,
       resetDemo,
       saveProduct,

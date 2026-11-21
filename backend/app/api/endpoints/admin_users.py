@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import List, Optional
 from datetime import datetime
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
 from app.models.order import Order
+from app.schemas.user import UserResponse
 
 router = APIRouter(prefix="/api/admin/users", tags=["admin-users"])
 
@@ -39,7 +40,9 @@ class UserWithOrdersResponse(BaseModel):
 
 class UserListResponse(BaseModel):
     total: int
-    items: list
+    # A bare `list` makes Pydantic v2 fail to serialise ORM rows
+    # (`PydanticSerializationError: Unable to serialize unknown type: User`).
+    items: List[UserResponse]
 
 
 @router.get("", response_model=UserListResponse)

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AdminIcon } from "../icons";
 import { useAdminData } from "../data/store";
@@ -32,13 +32,19 @@ const daylightNow = (): boolean => {
 export function DeviceDetail(): JSX.Element {
   const params = useParams();
   const code = decodeURIComponent(params.code ?? "");
-  const { data, isDemo, toast, saveDevice } = useAdminData();
+  const { data, isDemo, toast, saveDevice, loadDevice } = useAdminData();
   const [, setVersion] = useState(0);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editLocation, setEditLocation] = useState("");
   const [thresholds, setThresholds] = useState<Thresholds | null>(null);
   const [calibration, setCalibration] = useState<{ airRaw: string; waterRaw: string } | null>(null);
+
+  /* The list endpoint only returns the latest reading. In live mode pull the
+     detail endpoint so the 24h curve and the readings table have history. */
+  useEffect(() => {
+    if (!isDemo) void loadDevice(code);
+  }, [code, isDemo, loadDevice]);
 
   const device = data.devices.find((row) => row.code === code);
   const rerender = (): void => setVersion((version) => version + 1);
@@ -201,7 +207,15 @@ export function DeviceDetail(): JSX.Element {
             <AdminIcon name="download" size={15} />
             导出读数
           </button>
-          <button className="btn" type="button" id="dd-refresh" onClick={rerender}>
+          <button
+            className="btn"
+            type="button"
+            id="dd-refresh"
+            onClick={() => {
+              void loadDevice(code);
+              rerender();
+            }}
+          >
             <AdminIcon name="refresh" size={15} />
             刷新
           </button>
