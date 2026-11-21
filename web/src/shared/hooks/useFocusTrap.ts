@@ -7,8 +7,11 @@ import { useEffect } from "react";
  */
 const FOCUSABLE = "a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex='-1'])";
 
-/** Legacy focused the first form control, skipping the head close button. */
-const INITIAL = "input, select, textarea, button:not(.modal__close)";
+/** Legacy focused the first form control, skipping the head close button.
+    Disabled controls cannot take focus, so they must not win the initial slot
+    (the device-code field is disabled on purpose). */
+const INITIAL =
+  "input:not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]):not(.modal__close)";
 
 function visible(el: HTMLElement): boolean {
   return el.getClientRects().length > 0;
