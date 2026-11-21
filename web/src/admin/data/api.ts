@@ -81,6 +81,17 @@ export function setToken(token: string): void {
   else storage.remove(TOKEN_KEY);
 }
 
+/* The backend stores plant photos as server-relative paths
+   (`/static/plants/绿萝.jpg`). In development the console and the API live on
+   different origins, so those paths must be resolved against `apiBase()`.
+   Everything else — demo `/assets/…` paths and remote https URLs — passes
+   through untouched. */
+export function mediaUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  if (value.startsWith("/static/")) return apiBase() + value;
+  return value;
+}
+
 export class ApiError extends Error {
   status: number;
 

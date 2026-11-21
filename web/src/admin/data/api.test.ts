@@ -6,6 +6,7 @@ import {
   apiBase,
   getToken,
   login,
+  mediaUrl,
   setApiBase,
   setToken,
 } from "./api";
@@ -189,5 +190,19 @@ describe("authenticated requests", () => {
     expect(urls[1]).toBe(`${DEFAULT_API_BASE}/api/admin/devices/FG-ESP32%2F001/readings?hours=48`);
     expect(urls[2]).toBe(`${DEFAULT_API_BASE}/api/admin/device-alerts`);
     expect(urls[3]).toBe(`${DEFAULT_API_BASE}/api/admin/device-alerts/7/ack`);
+  });
+});
+
+describe("mediaUrl", () => {
+  it("resolves backend-relative plant photos against the api origin", () => {
+    stubLocation("?api=http://127.0.0.1:8000");
+    expect(mediaUrl("/static/plants/绿萝.jpg")).toBe("http://127.0.0.1:8000/static/plants/绿萝.jpg");
+  });
+
+  it("passes demo asset paths, remote urls and empty values through", () => {
+    expect(mediaUrl("/assets/pothos.jpg")).toBe("/assets/pothos.jpg");
+    expect(mediaUrl("https://images.unsplash.com/x.jpg")).toBe("https://images.unsplash.com/x.jpg");
+    expect(mediaUrl(null)).toBeNull();
+    expect(mediaUrl("")).toBeNull();
   });
 });

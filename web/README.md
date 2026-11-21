@@ -148,6 +148,8 @@ cd backend && ./venv/bin/python -m app.db.seed_demo --touch
 
 后台登录后打开 <http://127.0.0.1:4177/admin/?api=http://127.0.0.1:8000#/login> 即可连接本机接口。
 
+植物图片由后端静态目录提供：`backend/static/plants/` 下 47 张图与植物同名，接口返回 `/static/plants/<中文名>.jpg`，后台会按 `?api=` 的接口地址补全为完整 URL。换后端地址时图片自动跟着走，不需要改数据。
+
 ## 固件接入
 
 设备侧无需登录，直接上报即可；首次上报会自动建档：

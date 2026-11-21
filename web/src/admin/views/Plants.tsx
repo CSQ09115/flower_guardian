@@ -8,6 +8,7 @@ import { PlantForm } from "../ui/PlantForm";
 import { Modal } from "../../shared/components/Modal";
 import { Pager } from "../../shared/components/Pager";
 import { CARE_LEVEL, num } from "../data/util";
+import { mediaUrl } from "../data/api";
 import type { Plant, PlantInput } from "../data/types";
 
 /* The list state survives a route change, like the legacy module variables. */
@@ -16,6 +17,18 @@ let category = "all";
 let level: "all" | "1" | "2" | "3" = "all";
 let page = 1;
 const PAGE_SIZE = 8;
+
+/* Live rows carry `/static/plants/<name>.jpg`, served by the API origin; demo
+   rows carry `/assets/…` and pass through. A broken URL falls back to the
+   first character instead of leaving an empty cell. */
+function PlantThumb({ plant }: { plant: Plant }): JSX.Element {
+  const [failed, setFailed] = useState(false);
+  const src = mediaUrl(plant.image_url);
+  if (!src || failed) {
+    return <span className="thumb-fallback">{plant.name.slice(0, 1)}</span>;
+  }
+  return <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} />;
+}
 
 export function Plants(): JSX.Element {
   const { data, toast, savePlant, removePlant } = useAdminData();
@@ -161,18 +174,7 @@ export function Plants(): JSX.Element {
                       <tr key={plant.id}>
                         <td>
                           <div className="cell-main">
-                            {plant.image_url ? (
-                              <img
-                                src={plant.image_url}
-                                alt=""
-                                loading="lazy"
-                                onError={(event) => {
-                                  event.currentTarget.style.display = "none";
-                                }}
-                              />
-                            ) : (
-                              <span className="thumb-fallback">{plant.name.slice(0, 1)}</span>
-                            )}
+                            <PlantThumb plant={plant} />
                             <span>
                               <b>{plant.name}</b>
                               <small>
