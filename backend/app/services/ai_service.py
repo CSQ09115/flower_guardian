@@ -1,4 +1,4 @@
-# AI服务 - 阿里云DashScope
+# AI服务 - Qwen（OpenAI兼容接口）
 import httpx
 import logging
 import asyncio
@@ -6,16 +6,31 @@ from typing import List, Dict, Any, Optional, AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
-# DashScope配置
-DASHSCOPE_API_KEY: Optional[str] = None
-DASHSCOPE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+# Qwen配置
+QWEN_API_KEY: Optional[str] = None
+QWEN_BASE_URL: str = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1"
+QWEN_MODEL: str = "qwen-turbo"
 
 
 def init_ai_service():
     """初始化AI服务配置"""
     from app.core.config import settings
-    global DASHSCOPE_API_KEY
-    DASHSCOPE_API_KEY = settings.DASHSCOPE_API_KEY
+    global QWEN_API_KEY, QWEN_BASE_URL, QWEN_MODEL
+    QWEN_API_KEY = settings.QWEN_API_KEY
+    QWEN_BASE_URL = settings.QWEN_BASE_URL.rstrip("/")
+    QWEN_MODEL = settings.QWEN_MODEL
+
+
+def _chat_url() -> str:
+    return f"{QWEN_BASE_URL}/chat/completions"
+
+
+def _resolve_model(model: Optional[str]) -> str:
+    if model:
+        return model
+    if not QWEN_MODEL:
+        init_ai_service()
+    return QWEN_MODEL
 
 
 # 植物专家系统提示
@@ -48,7 +63,7 @@ PLANT_TIP_PROMPT = """你是一位专业、友善的植物医生和园艺专家�
 async def chat(
     messages: List[Dict[str, str]],
     system_context: Optional[str] = None,
-    model: str = "qwen-turbo",
+    model: Optional[str] = None,
     temperature: float = 0.7,
     max_tokens: int = 1000
 ) -> str:
@@ -58,20 +73,22 @@ async def chat(
     Args:
         messages: 消息列表
         system_context: 系统上下文
-        model: 模型名称
+        model: 模型名称（默认使用.env中的QWEN_MODEL）
         temperature: 温度参数
         max_tokens: 最大token数
 
     Returns:
         AI回复内容
     """
-    global DASHSCOPE_API_KEY
+    global QWEN_API_KEY
 
-    if not DASHSCOPE_API_KEY:
+    if not QWEN_API_KEY:
         init_ai_service()
 
-    if not DASHSCOPE_API_KEY:
-        raise ValueError("DASHSCOPE_API_KEY未配置")
+    if not QWEN_API_KEY:
+        raise ValueError("QWEN_API_KEY未配置")
+
+    model = _resolve_model(model)
 
     # 构建消息
     all_messages = [{"role": "system", "content": PLANT_DOCTOR_PROMPT}]
@@ -88,7 +105,7 @@ async def chat(
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                DASHSCOPE_URL,
+                _chat_url(),
                 json={
                     "model": model,
                     "messages": all_messages,
@@ -96,7 +113,7 @@ async def chat(
                     "max_tokens": max_tokens,
                 },
                 headers={
-                    "Authorization": f"Bearer {DASHSCOPE_API_KEY}",
+                    "Authorization": f"Bearer {QWEN_API_KEY}",
                     "Content-Type": "application/json"
                 }
             )
@@ -122,7 +139,7 @@ async def chat(
 async def chat_stream(
     messages: List[Dict[str, str]],
     system_context: Optional[str] = None,
-    model: str = "qwen-turbo",
+    model: Optional[str] = None,
     temperature: float = 0.7,
     max_tokens: int = 1000
 ) -> AsyncGenerator[str, None]:
@@ -132,20 +149,22 @@ async def chat_stream(
     Args:
         messages: 消息列表
         system_context: 系统上下文
-        model: 模型名称
+        model: 模型名称（默认使用.env中的QWEN_MODEL）
         temperature: 温度参数
         max_tokens: 最大token数
 
     Yields:
         AI回复内容片段
     """
-    global DASHSCOPE_API_KEY
+    global QWEN_API_KEY
 
-    if not DASHSCOPE_API_KEY:
+    if not QWEN_API_KEY:
         init_ai_service()
 
-    if not DASHSCOPE_API_KEY:
-        raise ValueError("DASHSCOPE_API_KEY未配置")
+    if not QWEN_API_KEY:
+        raise ValueError("QWEN_API_KEY未配置")
+
+    model = _resolve_model(model)
 
     # 构建消息
     all_messages = [{"role": "system", "content": PLANT_DOCTOR_PROMPT}]
@@ -163,7 +182,7 @@ async def chat_stream(
         async with httpx.AsyncClient(timeout=60.0) as client:
             async with client.stream(
                 "POST",
-                DASHSCOPE_URL,
+                _chat_url(),
                 json={
                     "model": model,
                     "messages": all_messages,
@@ -172,7 +191,7 @@ async def chat_stream(
                     "stream": True
                 },
                 headers={
-                    "Authorization": f"Bearer {DASHSCOPE_API_KEY}",
+                    "Authorization": f"Bearer {QWEN_API_KEY}",
                     "Content-Type": "application/json"
                 }
             ) as response:
@@ -219,13 +238,15 @@ async def generate_plant_tip(weather_data: Dict[str, Any]) -> str:
     Returns:
         AI生成的小贴士
     """
-    global DASHSCOPE_API_KEY
+    global QWEN_API_KEY
 
-    if not DASHSCOPE_API_KEY:
+    if not QWEN_API_KEY:
         init_ai_service()
 
-    if not DASHSCOPE_API_KEY:
+    if not QWEN_API_KEY:
         return "今日请注意观察植物状态，保持适宜的浇水频率。"
+
+    model = _resolve_model(None)
 
     weather_text = f"""
 今日天气信息：
@@ -245,15 +266,15 @@ async def generate_plant_tip(weather_data: Dict[str, Any]) -> str:
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.post(
-                DASHSCOPE_URL,
+                _chat_url(),
                 json={
-                    "model": "qwen-turbo",
+                    "model": model,
                     "messages": messages,
                     "temperature": 0.8,
                     "max_tokens": 200,
                 },
                 headers={
-                    "Authorization": f"Bearer {DASHSCOPE_API_KEY}",
+                    "Authorization": f"Bearer {QWEN_API_KEY}",
                     "Content-Type": "application/json"
                 }
             )
