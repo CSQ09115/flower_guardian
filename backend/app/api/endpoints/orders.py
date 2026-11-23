@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import List, Optional
 import uuid
 from datetime import datetime
+from pydantic import BaseModel
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
@@ -79,6 +80,44 @@ def update_order(
     db.commit()
     db.refresh(order)
     return order
+
+
+@admin_router.delete("/{order_id}")
+def delete_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+
+    db.query(OrderItem).filter(OrderItem.order_id == order_id).delete(synchronize_session=False)
+    db.delete(order)
+    db.commit()
+    return {"message": "Order deleted successfully"}
+
+
+class BatchDeleteRequest(BaseModel):
+    ids: List[int]
+
+
+@admin_router.post("/batch-delete")
+def batch_delete_orders(
+    payload: BatchDeleteRequest,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    deleted = 0
+    for order_id in payload.ids:
+        order = db.query(Order).filter(Order.id == order_id).first()
+        if not order:
+            continue
+        db.query(OrderItem).filter(OrderItem.order_id == order_id).delete(synchronize_session=False)
+        db.delete(order)
+        deleted += 1
+    db.commit()
+    return {"deleted": deleted}
 
 
 # ===== 客户订单 API =====

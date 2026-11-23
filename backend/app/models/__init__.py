@@ -11,12 +11,17 @@ from app.models.address import Address
 from app.models.email_verification import EmailVerification, VerificationPurpose
 from app.models.chat import Conversation, ChatMessage
 from app.models.weather import WeatherQuery
-from app.models.device import Device, DeviceReading, DeviceAlert
+from app.models.device import Device, SensorReading, DeviceAlert, DRY_THRESHOLD
+from app.models.system_config import SystemConfig
+from app.models.email_log import EmailSendLog
+from app.models.sms_verification import SmsVerification
+from app.models.sms_log import SmsSendLog
 
 __all__ = [
     "User", "Plant", "UserPlant", "Reminder", "Diary", "Product",
     "Order", "OrderItem", "CartItem", "Payment", "DiagnosisRecord",
     "Address", "EmailVerification", "VerificationPurpose",
     "Conversation", "ChatMessage", "WeatherQuery",
-    "Device", "DeviceReading", "DeviceAlert"
+    "Device", "SensorReading", "DeviceAlert", "DRY_THRESHOLD", "SystemConfig",
+    "EmailSendLog", "SmsVerification", "SmsSendLog"
 ]

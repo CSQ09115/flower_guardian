@@ -231,6 +231,19 @@ table { border-collapse: collapse; width: 100%; }
 
 .nav-item.is-active .nav-item__badge { background: var(--green-2); color: #fff; }
 
+/* 未确认告警红点（设备菜单，30s overview 轮询驱动） */
+.nav-item__dot {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--danger, #d95f82);
+  box-shadow: 0 0 0 3px rgba(217, 95, 130, .18);
+}
+
 .sidebar__foot {
   padding: 12px;
   border: 1px solid var(--line);

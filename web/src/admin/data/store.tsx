@@ -56,7 +56,10 @@ export type AdminDataValue = {
   removePlant: (id: number) => Promise<void>;
   saveDevice: (code: string, payload: Partial<Device>) => Promise<void>;
   createDevice: (payload: { code: string; name: string; location: string }) => Promise<void>;
+  removeDevice: (code: string) => Promise<void>;
   acknowledgeAlert: (id: number) => Promise<void>;
+  /** POST /api/admin/{plants|users|orders}/batch-delete，返回实际删除数。 */
+  batchRemove: (kind: "plants" | "users" | "orders", ids: number[]) => Promise<number>;
 };
 
 export const EMPTY_DATA: AdminData = {
@@ -296,15 +299,24 @@ export function useAdminDataStore(): AdminDataValue {
   }, [signOut]);
 
   /* The device list only carries the latest point; the detail page needs the
-     full 24h history. Fetch it on demand and merge it into the same store. */
+     full history. Fetch the profile and the readings history in parallel and
+     merge them into the same store (readings sorted oldest → newest). */
   const loadDevice = useCallback(
     async (code: string) => {
       try {
-        const row = await api.device(code);
+        const [row, readings] = await Promise.all([
+          api.device(code),
+          api.deviceReadings(code, 24, 500).catch(() => null),
+        ]);
         setData((prev) => ({
           ...prev,
           devices: prev.devices.map((device) =>
-            device.code === code ? normalizeDevice(row as RawDevice) : device,
+            device.code === code
+              ? normalizeDevice({
+                  ...(row as RawDevice),
+                  readings: readings && readings.length ? [...readings].reverse() : undefined,
+                })
+              : device,
           ),
         }));
       } catch (error) {
@@ -403,6 +415,26 @@ export function useAdminDataStore(): AdminDataValue {
     [toast, loadLive],
   );
 
+  const removeDevice = useCallback(
+    async (code: string) => {
+      await api.deleteDevice(code);
+      await loadLive();
+      toast("设备已删除");
+    },
+    [toast, loadLive],
+  );
+
+  const batchRemove = useCallback(
+    async (kind: "plants" | "users" | "orders", ids: number[]) => {
+      const result = await api.batchDelete(kind, ids);
+      const deleted = result?.deleted ?? ids.length;
+      await loadLive();
+      toast(`批量删除完成：${deleted} 条`);
+      return deleted;
+    },
+    [toast, loadLive],
+  );
+
   const acknowledgeAlert = useCallback(
     async (id: number) => {
       await api.acknowledgeAlert(id);
@@ -433,7 +465,9 @@ export function useAdminDataStore(): AdminDataValue {
       removePlant,
       saveDevice,
       createDevice,
+      removeDevice,
       acknowledgeAlert,
+      batchRemove,
     }),
     [
       signedIn,
@@ -455,7 +489,9 @@ export function useAdminDataStore(): AdminDataValue {
       removePlant,
       saveDevice,
       createDevice,
+      removeDevice,
       acknowledgeAlert,
+      batchRemove,
     ],
   );
 

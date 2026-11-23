@@ -5,6 +5,9 @@ from app.api.endpoints.orders import router as orders_router, admin_router as or
 from app.api.endpoints.admin_users import router as admin_users_router
 from app.api.endpoints.admin_plants import router as admin_plants_router
 from app.api.endpoints.admin_stats import router as admin_stats_router
+from app.api.endpoints.admin_system_config import router as admin_system_config_router
+from app.api.endpoints.admin_email_logs import router as admin_email_logs_router
+from app.api.endpoints.admin_sms_logs import router as admin_sms_logs_router
 from app.api.endpoints.cart import router as cart_router
 from app.api.endpoints.payments import router as payments_router
 from app.api.endpoints.diagnoses import router as diagnoses_router
@@ -15,7 +18,9 @@ from app.api.endpoints.ai_chat import router as ai_chat_router
 from app.api.endpoints.weather import router as weather_router
 from app.api.endpoints.chat import router as chat_router
 from app.api.endpoints.devices import (
-    device_router, admin_router as admin_devices_router, alert_router as device_alerts_router,
+    router as devices_router,
+    admin_router as devices_admin_router,
+    alert_router as device_alert_router,
 )
 
 api_router = APIRouter()
@@ -34,6 +39,9 @@ api_router.include_router(orders_admin_router)
 api_router.include_router(admin_users_router)
 api_router.include_router(admin_plants_router)
 api_router.include_router(admin_stats_router)
+api_router.include_router(admin_system_config_router)
+api_router.include_router(admin_email_logs_router)
+api_router.include_router(admin_sms_logs_router)
 api_router.include_router(cart_router)
 api_router.include_router(payments_router)
 api_router.include_router(diagnoses_router)
@@ -42,6 +50,8 @@ api_router.include_router(addresses_router)
 api_router.include_router(ai_chat_router)
 api_router.include_router(weather_router)
 api_router.include_router(chat_router)
-api_router.include_router(device_router)
-api_router.include_router(admin_devices_router)
-api_router.include_router(device_alerts_router)
+# IoT 设备接口（护花使者硬件模块：ESP32 上报传感器数据、App 查询）
+api_router.include_router(devices_router)
+# 设备管理（后台）：设备 CRUD / 阈值 / 标定 + 告警查询与确认
+api_router.include_router(devices_admin_router)
+api_router.include_router(device_alert_router)

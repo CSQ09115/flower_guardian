@@ -1,10 +1,10 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { AdminIcon } from "../icons";
-import { NAV_GROUPS, ROUTES } from "../routes";
+import { SIDEBAR_NAV, ROUTES } from "../routes";
 import type { RouteKey } from "../routes";
 import { useAdminData } from "../data/store";
 import { pendingAlerts } from "../data/selectors";
-import { sensorSummary } from "../data/selectors";
+import { useDevicesOverview } from "../hooks/useDevicesOverview";
 
 type SidebarProps = {
   activeName: RouteKey | "login";
@@ -16,15 +16,39 @@ type SidebarProps = {
 /**
  * Sidebar with the brand block, the grouped navigation and the footer.
  * Markup and copy are ported from `renderSidebar()` in the legacy `app.js`.
+ * The devices entry carries a red dot badge fed by the 30s overview poll
+ * (unacknowledged alerts); log/config groups expand into per-page entries.
  */
 export function Sidebar({ activeName, sidebarRef, onConnect, onExit }: SidebarProps): JSX.Element {
-  const { data, admin } = useAdminData();
-  const counts: Partial<Record<RouteKey, number>> = {
-    alerts: pendingAlerts(data).length,
-    devices: sensorSummary(data).alarm,
-  };
+  const { data, admin, signedIn } = useAdminData();
+  const location = useLocation();
+  const overview = useDevicesOverview(signedIn);
+  const alertsBadge = pendingAlerts(data).length;
 
   const name = admin.username || "管理员";
+  const pathname = location.pathname.replace(/\/+$/, "") || "/";
+
+  const isActive = (key: RouteKey, path: string): boolean => {
+    if (key === "devices" && activeName === "deviceDetail") return true;
+    if (key === "configGroup") {
+      // config/:group pages highlight their own menu entry
+      return pathname === path;
+    }
+    return activeName === key;
+  };
+
+  /* Group entries by meta group label, preserving the declared order. */
+  const groups: { label: string; items: typeof SIDEBAR_NAV }[] = [];
+  SIDEBAR_NAV.forEach((item) => {
+    const label =
+      item.kind === "route" ? ROUTES[item.key].group : ROUTES.configGroup.group;
+    let group = groups.find((entry) => entry.label === label);
+    if (!group) {
+      group = { label, items: [] };
+      groups.push(group);
+    }
+    group.items.push(item);
+  });
 
   return (
     <aside className="sidebar" id="sidebar" ref={sidebarRef}>
@@ -37,23 +61,58 @@ export function Sidebar({ activeName, sidebarRef, onConnect, onExit }: SidebarPr
       </Link>
 
       <nav className="sidebar__nav" id="sidebar-nav" aria-label="后台导航">
-        {NAV_GROUPS.map((group) => (
+        {groups.map((group) => (
           <div className="nav-group" key={group.label}>
             <div className="nav-group__label">{group.label}</div>
-            {group.keys.map((key) => {
-              const route = ROUTES[key];
-              const active = key === activeName || (key === "devices" && activeName === "deviceDetail");
-              const count = counts[key] || 0;
+            {group.items.map((item) => {
+              if (item.kind === "config") {
+                const path = `/config/${item.group}`;
+                const active = isActive("configGroup", path);
+                return (
+                  <Link
+                    key={path}
+                    className={`nav-item${active ? " is-active" : ""}`}
+                    to={path}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    <AdminIcon name={item.iconName} size={17} />
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              }
+              const route = ROUTES[item.key];
+              const path =
+                item.key === "emailLogs"
+                  ? "/logs/email"
+                  : item.key === "smsLogs"
+                    ? "/logs/sms"
+                    : item.key === "configYolo"
+                      ? "/config/yolo"
+                      : item.key === "apiDocs"
+                        ? "/docs/api"
+                        : `/${item.key === "deviceDetail" ? "devices" : item.key}`;
+              const active = isActive(item.key, path);
+              /* 未确认告警红点：设备菜单用 overview 轮询值，告警菜单用已载入数据 */
+              const dot =
+                item.key === "devices"
+                  ? overview.unacknowledged_alerts
+                  : item.key === "alerts"
+                    ? alertsBadge
+                    : 0;
               return (
                 <Link
-                  key={key}
+                  key={item.key}
                   className={`nav-item${active ? " is-active" : ""}`}
-                  to={`/${key}`}
+                  to={path}
                   aria-current={active ? "page" : undefined}
+                  title={dot ? `${dot} 条未确认告警` : undefined}
                 >
                   <AdminIcon name={route.iconName} size={17} />
                   <span>{route.title}</span>
-                  {count ? <span className="nav-item__badge">{count}</span> : null}
+                  {item.key === "alerts" && alertsBadge ? (
+                    <span className="nav-item__badge">{alertsBadge}</span>
+                  ) : null}
+                  {dot ? <span className="nav-item__dot" aria-label={`${dot} 条未确认告警`} /> : null}
                 </Link>
               );
             })}

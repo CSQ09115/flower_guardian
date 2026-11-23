@@ -17,10 +17,8 @@ class Settings(BaseSettings):
     SMTP_PASSWORD: str = ""
     SMTP_FROM: str = ""
 
-    # Qwen AI配置 (OpenAI兼容接口)
-    QWEN_API_KEY: str = ""
-    QWEN_BASE_URL: str = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1"
-    QWEN_MODEL: str = "qwen-turbo"
+    # DashScope AI配置
+    DASHSCOPE_API_KEY: str = ""
 
     # 和风天气API配置
     HEFENG_KEY: str = ""

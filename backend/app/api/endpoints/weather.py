@@ -29,8 +29,23 @@ async def get_weather_tips(request: LocationRequest):
         }
 
     except ValueError as e:
-        logger.error(f"配置错误: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        # 配置缺失时不抛异常，返回明确的“未配置”状态供前端展示
+        logger.warning(f"天气配置缺失: {str(e)}")
+        return {
+            "weather": {
+                "temp": 0,
+                "tempMax": 0,
+                "tempMin": 0,
+                "humidity": 0,
+                "condition": "未配置",
+                "conditionIcon": "",
+                "airQuality": "未知",
+                "uvIndex": 0,
+                "windSpeed": "0级",
+                "location": "未配置",
+            },
+            "tip": str(e),
+        }
     except Exception as e:
         logger.error(f"获取天气失败: {str(e)}")
         raise HTTPException(status_code=500, detail=f"获取天气失败: {str(e)}")

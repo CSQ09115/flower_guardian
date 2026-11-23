@@ -11,7 +11,10 @@
 import type {
   AdminUser,
   Alert,
+  ConfigGroup,
   Device,
+  EmailLog,
+  LogList,
   Order,
   OrderPatch,
   Plant,
@@ -19,13 +22,28 @@ import type {
   Product,
   ProductInput,
   Reading,
+  SmsLog,
   User,
+  YoloSummary,
 } from "./types";
 
 const TOKEN_KEY = "fg_admin_token";
 const BASE_KEY = "fg_api_base";
 
-export const DEFAULT_API_BASE = "http://localhost:8000";
+/* Same-origin when the backend serves the console (`/admin`); in dev (vite on
+   4177) the API lives on :8000. The `?api=` override still wins. */
+function detectApiBase(): string {
+  try {
+    const loc = globalThis.location;
+    if (!loc) return "http://localhost:8000";
+    if (loc.port === "4177") return `${loc.protocol}//${loc.hostname}:8000`;
+    return loc.origin;
+  } catch {
+    return "http://localhost:8000";
+  }
+}
+
+export const DEFAULT_API_BASE = detectApiBase();
 
 /* `localStorage` is missing in Node (tests, prerender); fall back to memory. */
 const memoryStore = new Map<string, string>();
@@ -213,13 +231,89 @@ export const api = {
     request<Device>(`/api/admin/devices/${encodeURIComponent(code)}`),
   updateDevice: (code: string, body: Partial<Device>): Promise<Device> =>
     request<Device>(`/api/admin/devices/${encodeURIComponent(code)}`, { method: "PUT", body }),
-  deviceReadings: (code: string, hours = 24): Promise<{ items: Reading[] }> =>
-    request<{ items: Reading[] }>(
-      `/api/admin/devices/${encodeURIComponent(code)}/readings?hours=${hours}`,
+  deviceReadings: (code: string, hours = 24, limit = 500): Promise<Reading[]> =>
+    request<Reading[]>(
+      `/api/admin/devices/${encodeURIComponent(code)}/readings?hours=${hours}&limit=${limit}`,
     ),
-  deviceAlerts: (): Promise<ListResult<Alert>> =>
-    request<ListResult<Alert>>("/api/admin/device-alerts"),
+  /* 告警挂在 /api/device-alerts（无 /admin 前缀）；确认是 POST …/acknowledge。 */
+  deviceAlerts: (params: { page?: number; size?: number; acknowledged?: boolean } = {}): Promise<
+    ListResult<Alert> & { total?: number; page?: number; page_size?: number }
+  > => {
+    const search = new URLSearchParams();
+    if (params.page) search.set("page", String(params.page));
+    if (params.size) search.set("size", String(params.size));
+    if (params.acknowledged != null) search.set("acknowledged", String(params.acknowledged));
+    const qs = search.toString();
+    return request(`/api/device-alerts${qs ? `?${qs}` : ""}`);
+  },
   acknowledgeAlert: (id: number): Promise<Alert> =>
-    request<Alert>(`/api/admin/device-alerts/${id}/ack`, { method: "PUT" }),
+    request<Alert>(`/api/device-alerts/${id}/acknowledge`, { method: "POST" }),
   sensorsOverview: (): Promise<unknown> => request<unknown>("/api/admin/devices/overview"),
+  deleteDevice: (code: string): Promise<null> =>
+    request<null>(`/api/admin/devices/${encodeURIComponent(code)}`, { method: "DELETE" }),
+
+  /* ── 批量删除（POST /api/admin/{plants|users|orders}/batch-delete）── */
+  batchDelete: (kind: "plants" | "users" | "orders", ids: number[]): Promise<{ deleted: number }> =>
+    request<{ deleted: number }>(`/api/admin/${kind}/batch-delete`, {
+      method: "POST",
+      body: { ids },
+    }),
+
+  /* ── 发送日志 ── */
+  emailLogs: (params: { status?: string; page?: number; size?: number } = {}): Promise<LogList<EmailLog>> => {
+    const search = new URLSearchParams();
+    if (params.status) search.set("status", params.status);
+    if (params.page) search.set("page", String(params.page));
+    if (params.size) search.set("size", String(params.size));
+    const qs = search.toString();
+    return request(`/api/admin/email-logs${qs ? `?${qs}` : ""}`);
+  },
+  smsLogs: (params: { status?: string; page?: number; size?: number } = {}): Promise<LogList<SmsLog>> => {
+    const search = new URLSearchParams();
+    if (params.status) search.set("status", params.status);
+    if (params.page) search.set("page", String(params.page));
+    if (params.size) search.set("size", String(params.size));
+    const qs = search.toString();
+    return request(`/api/admin/sms-logs${qs ? `?${qs}` : ""}`);
+  },
+  deleteFailedEmailLogs: (): Promise<{ deleted: number }> =>
+    request<{ deleted: number }>("/api/admin/email-logs/failed", { method: "DELETE" }),
+  deleteFailedSmsLogs: (): Promise<{ deleted: number }> =>
+    request<{ deleted: number }>("/api/admin/sms-logs/failed", { method: "DELETE" }),
+
+  /* ── 系统配置：GET 返回全部分组；PUT 按 group 保存 ── */
+  systemConfig: (): Promise<{ groups: ConfigGroup[] }> =>
+    request<{ groups: ConfigGroup[] }>("/api/admin/system-config"),
+  updateSystemConfig: (group: string, values: Record<string, string>): Promise<{ group: ConfigGroup }> =>
+    request<{ group: ConfigGroup }>(`/api/admin/system-config/${encodeURIComponent(group)}`, {
+      method: "PUT",
+      body: { values },
+    }),
+
+  /* ── YOLO 模型管理 ── */
+  yoloModels: (): Promise<{ plant: YoloSummary; pest: YoloSummary }> =>
+    request<{ plant: YoloSummary; pest: YoloSummary }>("/api/admin/system-config/yolo/models"),
+  uploadYoloModel: (kind: "plant" | "pest", file: File): Promise<{ message: string; filename: string; summary: YoloSummary }> => {
+    /* 上传走独立的 multipart fetch（request() 只支持 JSON/form）。 */
+    const data = new FormData();
+    data.append("file", file);
+    return fetch(`${apiBase()}/api/admin/system-config/yolo/${kind}/upload`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${getToken()}` },
+      body: data,
+    }).then(async (res) => {
+      const payload = (await res.json().catch(() => null)) as { detail?: string; message?: string } | null;
+      if (!res.ok) throw new ApiError(payload?.detail || `上传失败（${res.status}）`, res.status);
+      return payload as unknown as { message: string; filename: string; summary: YoloSummary };
+    });
+  },
+  deleteYoloModel: (kind: "plant" | "pest", filename: string): Promise<{ message: string; summary: YoloSummary }> =>
+    request(`/api/admin/system-config/yolo/${kind}/models/${encodeURIComponent(filename)}`, {
+      method: "DELETE",
+    }),
+  setActiveYoloModel: (kind: "plant" | "pest", filename: string): Promise<{ message: string; summary: YoloSummary }> =>
+    request(`/api/admin/system-config/yolo/${kind}/active`, {
+      method: "PUT",
+      body: { filename },
+    }),
 };

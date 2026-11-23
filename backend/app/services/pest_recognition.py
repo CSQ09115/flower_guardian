@@ -12,9 +12,31 @@ class PestRecognitionService:
 
     def __init__(self, model_path: str = "backend/models/pest.pt"):
         self.model = None
-        self.model_path = model_path
+        self._default_model_path = model_path
+        self.model_path = self._resolve_model_path()
         self.classes = self._load_classes()
         self._load_model()
+    def _resolve_model_path(self) -> str:
+        """优先使用后台启用的上传模型，未配置时回退默认模型。"""
+        try:
+            from app.core.yolo_models import get_default_model_path, resolve_active_path
+            active_path = resolve_active_path("pest")
+            if active_path:
+                return str(active_path)
+            default_path = get_default_model_path("pest")
+            if default_path.exists():
+                return str(default_path)
+        except Exception as e:
+            print(f"[PestRecognition] 读取模型配置失败，使用默认模型: {e}")
+        return self._default_model_path
+
+    def reload(self) -> bool:
+        """按当前系统配置重新加载模型。"""
+        self.model_path = self._resolve_model_path()
+        self.model = None
+        self._load_model()
+        print(f"[PestRecognition] 模型已重新加载: {self.model_path}")
+        return self.model is not None
 
     def _load_classes(self) -> dict:
         """加载病虫害类别"""

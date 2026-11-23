@@ -53,7 +53,10 @@ export type Plant = {
   survival_rate: number;
   tips: string | null;
   common_mistakes: string | null;
+  fertilization?: string | null;
+  repotting?: string | null;
   created_at: string;
+  updated_at?: string;
 };
 
 export type User = {
@@ -62,7 +65,9 @@ export type User = {
   email: string;
   avatar_url: string | null;
   bio: string | null;
-  is_email_verified: boolean;
+  /* The live backend no longer returns this field; treat it as optional and
+     render "未验证" when missing. */
+  is_email_verified?: boolean;
   role: string;
   created_at: string;
 };
@@ -90,6 +95,8 @@ export type Reading = {
   soil_moisture: number;
   soil_temp: number;
   light_lux: number | null;
+  air_temp?: number | null;
+  air_humidity?: number | null;
   firmware?: string;
   ip_address?: string | null;
   created_at: string;
@@ -111,29 +118,39 @@ export type Device = {
   id: number;
   code: string;
   name: string;
-  location: string;
+  location: string | null;
   firmware: string;
   ip_address: string | null;
   report_interval: number;
   enabled: boolean;
+  online?: boolean;
+  plant_name?: string | null;
   last_seen: string | null;
   created_at: string;
+  updated_at?: string;
   thresholds: Thresholds;
   calibration: Calibration;
+  /* The list/detail endpoints only carry `latest_reading`; the console fills
+     this array from `latest_reading` and the `/readings` history endpoint. */
   readings: Reading[];
 };
 
 export type Alert = {
   id: number;
+  device_id?: number;
   device_code: string;
+  device_name?: string;
   metric: string;
   label: string;
   value: number | null;
   threshold: number;
   direction: "below" | "above" | "near" | "missing" | "offline";
   level: "warn" | "danger";
+  /* The console normalises `created_at` into `at`. */
   at: string;
+  created_at?: string;
   acknowledged: boolean;
+  acknowledged_at?: string | null;
   hint: string;
 };
 
@@ -143,6 +160,75 @@ export type AdminUser = {
   email?: string;
   role: string;
   avatar_url: string | null;
+};
+
+/* ── 邮件 / 短信发送日志（/api/admin/email-logs、/api/admin/sms-logs）── */
+
+export type EmailLog = {
+  id: number;
+  recipient: string;
+  subject: string;
+  purpose: string;
+  status: "success" | "failed" | string;
+  error: string;
+  created_at: string;
+};
+
+export type SmsLog = {
+  id: number;
+  recipient: string;
+  purpose: string;
+  status: "success" | "failed" | string;
+  error: string;
+  created_at: string;
+};
+
+export type LogList<T> = {
+  total: number;
+  page: number;
+  size: number;
+  success_count: number;
+  failed_count: number;
+  items: T[];
+};
+
+/* ── 系统配置（GET /api/admin/system-config）── */
+
+export type ConfigField = {
+  key: string;
+  label: string;
+  type: "text" | "number" | "secret" | "bool" | string;
+  default?: string;
+  value: string;
+  /** 是否已在数据库落值；secret 字段只回传这个标记，不回显明文。 */
+  configured: boolean;
+};
+
+export type ConfigGroup = {
+  key: string;
+  title: string;
+  description: string;
+  fields: ConfigField[];
+};
+
+/* ── YOLO 模型（GET /api/admin/system-config/yolo/models）── */
+
+export type YoloModelFile = {
+  filename: string;
+  size: number;
+  uploaded_at: string;
+  active: boolean;
+  builtin: boolean;
+};
+
+export type YoloSummary = {
+  kind: "plant" | "pest" | string;
+  active: string;
+  default_model: string;
+  default_exists: boolean;
+  allowed_exts: string[];
+  max_size: number;
+  models: YoloModelFile[];
 };
 
 export type AdminData = {

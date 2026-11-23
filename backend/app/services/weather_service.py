@@ -2,7 +2,6 @@
 import httpx
 import logging
 from typing import Dict, Any, Optional
-from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +60,12 @@ async def get_current_weather(location: str) -> Optional[Dict[str, Any]]:
 
 async def get_weather_for_smart_reminder(location: str) -> Optional[Dict[str, Any]]:
     """使用和风天气API获取天气 (智能提醒用)"""
-    if not HEFENG_KEY:
+    from app.core.system_config import get_config_value
+    # 仅从数据库读取业务配置，不回退 .env；未配置时直接返回，不抛异常
+    api_key = get_config_value("weather", "api_key")
+    base_url = get_config_value("weather", "base_url") or HEFENG_BASE
+
+    if not api_key:
         return None
 
     # 先通过城市名获取坐标
@@ -70,7 +74,7 @@ async def get_weather_for_smart_reminder(location: str) -> Optional[Dict[str, An
             geo_url = "https://geoapi.qweather.com/v2/city/lookup"
             geo_params = {
                 "location": location,
-                "key": HEFENG_KEY
+                "key": api_key
             }
             geo_resp = await client.get(geo_url, params=geo_params)
             if geo_resp.status_code == 200:
@@ -89,10 +93,10 @@ async def get_weather_for_smart_reminder(location: str) -> Optional[Dict[str, An
     # 获取天气
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            weather_url = f"{HEFENG_BASE}/weather/now"
+            weather_url = f"{base_url}/weather/now"
             weather_params = {
                 "location": f"{lon},{lat}",
-                "key": HEFENG_KEY
+                "key": api_key
             }
             weather_resp = await client.get(weather_url, params=weather_params)
             if weather_resp.status_code == 200:
@@ -138,8 +142,7 @@ def get_watering_advice(weather: Dict[str, Any]) -> str:
 
     return "；".join(tips) if tips else "天气适宜，按正常间隔浇水"
 
-# 和风天气API配置
-HEFENG_KEY = settings.HEFENG_KEY
+# 和风天气 API 内置默认地址（非敏感默认值，允许代码内置）
 HEFENG_BASE = "https://devapi.qweather.com/v7"
 
 
@@ -154,8 +157,13 @@ async def get_weather_data(latitude: float, longitude: float) -> Dict[str, Any]:
     Returns:
         天气数据字典
     """
-    if not HEFENG_KEY:
-        raise ValueError("和风天气API未配置")
+    # 仅从数据库读取业务配置，不回退 .env
+    from app.core.system_config import get_config_value
+    api_key = get_config_value("weather", "api_key")
+    base_url = get_config_value("weather", "base_url") or HEFENG_BASE
+
+    if not api_key:
+        raise ValueError("天气 API 未配置，请在后台「系统配置 - 天气 API」中填写 API Key")
 
     # 先调用地理编码API获取城市名称
     location_name = "未知"
@@ -164,7 +172,7 @@ async def get_weather_data(latitude: float, longitude: float) -> Dict[str, Any]:
             geo_url = "https://geoapi.qweather.com/v2/city/lookup"
             geo_params = {
                 "location": f"{longitude},{latitude}",
-                "key": HEFENG_KEY
+                "key": api_key
             }
             geo_resp = await client.get(geo_url, params=geo_params)
             if geo_resp.status_code == 200:
@@ -175,10 +183,10 @@ async def get_weather_data(latitude: float, longitude: float) -> Dict[str, Any]:
         logger.warning(f"获取城市名称失败: {e}")
 
     async with httpx.AsyncClient(timeout=10.0) as client:
-        weather_url = f"{HEFENG_BASE}/weather/now"
+        weather_url = f"{base_url}/weather/now"
         weather_params = {
             "location": f"{longitude},{latitude}",
-            "key": HEFENG_KEY
+            "key": api_key
         }
         weather_resp = await client.get(weather_url, params=weather_params)
 
@@ -189,12 +197,12 @@ async def get_weather_data(latitude: float, longitude: float) -> Dict[str, Any]:
         now_data = weather_json.get("now", {})
 
         # 获取空气质量
-        air_url = f"{HEFENG_BASE}/air/now"
+        air_url = f"{base_url}/air/now"
         air_resp = await client.get(air_url, params=weather_params)
         air_data = air_resp.json().get("now", {}) if air_resp.status_code == 200 else {}
 
         # 获取每日预报（包含最高最低温度）
-        daily_url = f"{HEFENG_BASE}/weather/7d"
+        daily_url = f"{base_url}/weather/7d"
         daily_resp = await client.get(daily_url, params=weather_params)
         daily_data = daily_resp.json().get("daily", [])[0] if daily_resp.status_code == 200 else {}
 

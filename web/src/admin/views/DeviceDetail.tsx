@@ -46,6 +46,16 @@ export function DeviceDetail(): JSX.Element {
     void loadDevice(code);
   }, [code, loadDevice]);
 
+  /* 每 3 秒自动刷新最新读数（设备每 10 秒上报一次）；编辑弹窗打开时暂停，
+     避免刷新重渲染打断输入。 */
+  useEffect(() => {
+    if (editing) return;
+    const timer = window.setInterval(() => {
+      void loadDevice(code);
+    }, 3000);
+    return () => window.clearInterval(timer);
+  }, [code, loadDevice, editing]);
+
   const device = data.devices.find((row) => row.code === code);
   const rerender = (): void => setVersion((version) => version + 1);
 
@@ -161,7 +171,7 @@ export function DeviceDetail(): JSX.Element {
           </div>
           <h1>{device.name}</h1>
           <p>
-            {device.location || "未设置摆放位置"} · 共 {readings.length} 条读数缓存
+            {device.location || "未设置摆放位置"} · 共 {readings.length} 条读数缓存 · 每 3 秒自动刷新
           </p>
         </div>
         <div className="page-head__actions">

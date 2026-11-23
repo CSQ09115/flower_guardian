@@ -7,6 +7,7 @@ from app.db.base import Base
 class VerificationPurpose(str, enum.Enum):
     REGISTER = "register"
     PASSWORD_RESET = "password_reset"
+    BIND_EMAIL = "bind_email"  # 已登录用户绑定/合并邮箱
 
 
 class EmailVerification(Base):

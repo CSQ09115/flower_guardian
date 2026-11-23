@@ -18,6 +18,7 @@ class User(Base):
     verification_code_expires = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     role = Column(String(20), default="user")  # admin 或 user
+    phone = Column(String(20), unique=True, index=True, nullable=True)  # 手机号（短信登录）
     expo_push_token = Column(String(500), nullable=True)  # Expo 推送令牌
 
     user_plants = relationship("UserPlant", back_populates="user")

@@ -5,6 +5,7 @@ import { useAdminData } from "../data/store";
 import { Badge } from "../ui/Badge";
 import { EmptyState } from "../ui/EmptyState";
 import { Kpi } from "../ui/Kpi";
+import { Modal } from "../../shared/components/Modal";
 import { OrderDetail } from "../ui/OrderDetail";
 import { Pager } from "../../shared/components/Pager";
 import { dateTime, DELIVERY_TYPE, money, num, ORDER_STATUS, sum } from "../data/util";
@@ -17,9 +18,12 @@ let page = 1;
 const PAGE_SIZE = 8;
 
 export function Orders(): JSX.Element {
-  const { data, toast, saveOrder } = useAdminData();
+  const { data, toast, saveOrder, batchRemove } = useAdminData();
   const [, setVersion] = useState(0);
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const orders = data.orders;
   const paid = orders.filter((o) => o.status !== "cancelled");
@@ -50,6 +54,15 @@ export function Orders(): JSX.Element {
           <p>查看订单主体与订单项，推进状态。金额等于各订单项小计之和，取消订单仍计入统计数据。</p>
         </div>
         <div className="page-head__actions">
+          <button
+            className="btn btn--coral"
+            type="button"
+            disabled={!selected.size}
+            onClick={() => setBulkConfirm(true)}
+          >
+            <AdminIcon name="trash" size={15} />
+            批量删除{selected.size ? `（${selected.size}）` : ""}
+          </button>
           <Link className="btn btn--ghost" to="/stats">
             <AdminIcon name="chart" size={15} />
             数据统计
@@ -119,9 +132,23 @@ export function Orders(): JSX.Element {
         <div id="o-body">
           {slice.length ? (
             <div className="table-wrap">
-              <table className="table" style={{ minWidth: "900px" }}>
+              <table className="table" style={{ minWidth: "940px" }}>
                 <thead>
                   <tr>
+                    <th style={{ width: "36px" }}>
+                      <input
+                        type="checkbox"
+                        aria-label="全选本页"
+                        checked={slice.length > 0 && slice.every((order) => selected.has(order.id))}
+                        onChange={(event) => {
+                          const next = new Set(selected);
+                          slice.forEach((order) =>
+                            event.target.checked ? next.add(order.id) : next.delete(order.id),
+                          );
+                          setSelected(next);
+                        }}
+                      />
+                    </th>
                     <th>订单号</th>
                     <th>用户</th>
                     <th className="num">商品数</th>
@@ -140,6 +167,19 @@ export function Orders(): JSX.Element {
                     const meta = ORDER_STATUS[order.status] || { label: order.status, tone: "" };
                     return (
                       <tr key={order.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`选择 ${order.order_no}`}
+                            checked={selected.has(order.id)}
+                            onChange={(event) => {
+                              const next = new Set(selected);
+                              if (event.target.checked) next.add(order.id);
+                              else next.delete(order.id);
+                              setSelected(next);
+                            }}
+                          />
+                        </td>
                         <td>
                           <span className="mono">{order.order_no}</span>
                           <div className="field__hint">#{order.id}</div>
@@ -211,6 +251,45 @@ export function Orders(): JSX.Element {
           }
         }}
       />
+
+      <Modal
+        open={bulkConfirm}
+        title="批量删除订单"
+        subtitle={`将调用 POST /api/admin/orders/batch-delete 删除 ${selected.size} 笔订单。`}
+        onClose={() => setBulkConfirm(false)}
+        footer={
+          <>
+            <button className="btn btn--ghost" type="button" onClick={() => setBulkConfirm(false)}>
+              取消
+            </button>
+            <button
+              className="btn btn--coral"
+              type="button"
+              disabled={bulkBusy}
+              onClick={async () => {
+                setBulkBusy(true);
+                try {
+                  await batchRemove("orders", [...selected]);
+                  setSelected(new Set());
+                  setBulkConfirm(false);
+                  page = 1;
+                  rerender();
+                } catch (error) {
+                  toast((error as Error).message, "error");
+                } finally {
+                  setBulkBusy(false);
+                }
+              }}
+            >
+              确认删除
+            </button>
+          </>
+        }
+      >
+        <p style={{ color: "var(--muted)", fontSize: "13px" }}>
+          选中的 {selected.size} 笔订单（含订单明细）会被永久删除；删除后统计数字按剩余订单重算，此操作不可撤销。
+        </p>
+      </Modal>
     </>
   );
 }

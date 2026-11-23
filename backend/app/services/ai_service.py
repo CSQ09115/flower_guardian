@@ -1,4 +1,4 @@
-# AI服务 - Qwen（OpenAI兼容接口）
+# AI服务 - 阿里云DashScope
 import httpx
 import logging
 import asyncio
@@ -6,31 +6,38 @@ from typing import List, Dict, Any, Optional, AsyncGenerator
 
 logger = logging.getLogger(__name__)
 
-# Qwen配置
-QWEN_API_KEY: Optional[str] = None
-QWEN_BASE_URL: str = "https://token-plan.maas.qianwenaiapi.com/compatible-mode/v1"
-QWEN_MODEL: str = "qwen-turbo"
+# DashScope 默认接口地址与默认模型（非敏感默认值，允许代码内置）
+DASHSCOPE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions"
+DEFAULT_AI_MODEL = "qwen-turbo"
+
+_CHAT_COMPLETIONS_SUFFIX = "/chat/completions"
 
 
-def init_ai_service():
-    """初始化AI服务配置"""
-    from app.core.config import settings
-    global QWEN_API_KEY, QWEN_BASE_URL, QWEN_MODEL
-    QWEN_API_KEY = settings.QWEN_API_KEY
-    QWEN_BASE_URL = settings.QWEN_BASE_URL.rstrip("/")
-    QWEN_MODEL = settings.QWEN_MODEL
+def _normalize_base_url(base_url: str) -> str:
+    """把后台填写的 base_url 规范化为完整的 chat/completions 端点。
+
+    兼容多种填法：
+    - https://api.deepseek.com          -> https://api.deepseek.com/chat/completions
+    - https://api.deepseek.com/         -> https://api.deepseek.com/chat/completions
+    - https://api.openai.com/v1         -> https://api.openai.com/v1/chat/completions
+    - .../compatible-mode/v1            -> .../compatible-mode/v1/chat/completions
+    - 已经是完整端点                     -> 原样返回
+    """
+    url = (base_url or "").strip().rstrip("/")
+    if not url:
+        return DASHSCOPE_URL
+    if url.endswith(_CHAT_COMPLETIONS_SUFFIX):
+        return url
+    return f"{url}{_CHAT_COMPLETIONS_SUFFIX}"
 
 
-def _chat_url() -> str:
-    return f"{QWEN_BASE_URL}/chat/completions"
-
-
-def _resolve_model(model: Optional[str]) -> str:
-    if model:
-        return model
-    if not QWEN_MODEL:
-        init_ai_service()
-    return QWEN_MODEL
+def _resolve_ai_config() -> tuple:
+    """AI 配置只从后台数据库读取，不回退 .env；密钥未配置时调用方返回友好提示。"""
+    from app.core.system_config import get_config_value
+    api_key = get_config_value("ai", "api_key")
+    base_url = get_config_value("ai", "base_url") or DASHSCOPE_URL
+    default_model = get_config_value("ai", "model") or DEFAULT_AI_MODEL
+    return api_key, base_url, default_model
 
 
 # 植物专家系统提示
@@ -73,22 +80,19 @@ async def chat(
     Args:
         messages: 消息列表
         system_context: 系统上下文
-        model: 模型名称（默认使用.env中的QWEN_MODEL）
+        model: 模型名称
         temperature: 温度参数
         max_tokens: 最大token数
 
     Returns:
         AI回复内容
     """
-    global QWEN_API_KEY
+    api_key, base_url, default_model = _resolve_ai_config()
+    if not api_key:
+        raise ValueError("AI 服务未配置，请在后台「系统配置 - AI 问诊」中填写 API Key")
 
-    if not QWEN_API_KEY:
-        init_ai_service()
-
-    if not QWEN_API_KEY:
-        raise ValueError("QWEN_API_KEY未配置")
-
-    model = _resolve_model(model)
+    model = model or default_model
+    endpoint = _normalize_base_url(base_url)
 
     # 构建消息
     all_messages = [{"role": "system", "content": PLANT_DOCTOR_PROMPT}]
@@ -100,12 +104,12 @@ async def chat(
     # 添加用户消息
     all_messages.extend(messages)
 
-    logger.info(f"调用AI模型: {model}")
+    logger.info(f"调用AI模型: {model} (endpoint={endpoint})")
 
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
-                _chat_url(),
+                endpoint,
                 json={
                     "model": model,
                     "messages": all_messages,
@@ -113,7 +117,7 @@ async def chat(
                     "max_tokens": max_tokens,
                 },
                 headers={
-                    "Authorization": f"Bearer {QWEN_API_KEY}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 }
             )
@@ -149,22 +153,19 @@ async def chat_stream(
     Args:
         messages: 消息列表
         system_context: 系统上下文
-        model: 模型名称（默认使用.env中的QWEN_MODEL）
+        model: 模型名称
         temperature: 温度参数
         max_tokens: 最大token数
 
     Yields:
         AI回复内容片段
     """
-    global QWEN_API_KEY
+    api_key, base_url, default_model = _resolve_ai_config()
+    if not api_key:
+        raise ValueError("AI 服务未配置，请在后台「系统配置 - AI 问诊」中填写 API Key")
 
-    if not QWEN_API_KEY:
-        init_ai_service()
-
-    if not QWEN_API_KEY:
-        raise ValueError("QWEN_API_KEY未配置")
-
-    model = _resolve_model(model)
+    model = model or default_model
+    endpoint = _normalize_base_url(base_url)
 
     # 构建消息
     all_messages = [{"role": "system", "content": PLANT_DOCTOR_PROMPT}]
@@ -176,13 +177,13 @@ async def chat_stream(
     # 添加用户消息
     all_messages.extend(messages)
 
-    logger.info(f"流式调用AI模型: {model}")
+    logger.info(f"流式调用AI模型: {model} (endpoint={endpoint})")
 
     try:
         async with httpx.AsyncClient(timeout=60.0) as client:
             async with client.stream(
                 "POST",
-                _chat_url(),
+                endpoint,
                 json={
                     "model": model,
                     "messages": all_messages,
@@ -191,14 +192,15 @@ async def chat_stream(
                     "stream": True
                 },
                 headers={
-                    "Authorization": f"Bearer {QWEN_API_KEY}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 }
             ) as response:
                 if response.status_code != 200:
-                    error_text = await response.atext()
+                    # 流式响应需先读取完整 body 才能拿到错误详情
+                    error_text = (await response.aread()).decode("utf-8", "ignore")
                     logger.error(f"AI API错误: {error_text}")
-                    raise Exception(f"AI服务调用失败: {error_text}")
+                    raise Exception(f"AI服务调用失败({response.status_code}): {error_text[:300]}")
 
                 full_content = ""
 
@@ -238,15 +240,9 @@ async def generate_plant_tip(weather_data: Dict[str, Any]) -> str:
     Returns:
         AI生成的小贴士
     """
-    global QWEN_API_KEY
-
-    if not QWEN_API_KEY:
-        init_ai_service()
-
-    if not QWEN_API_KEY:
+    api_key, base_url, default_model = _resolve_ai_config()
+    if not api_key:
         return "今日请注意观察植物状态，保持适宜的浇水频率。"
-
-    model = _resolve_model(None)
 
     weather_text = f"""
 今日天气信息：
@@ -266,15 +262,15 @@ async def generate_plant_tip(weather_data: Dict[str, Any]) -> str:
     try:
         async with httpx.AsyncClient(timeout=15.0) as client:
             response = await client.post(
-                _chat_url(),
+                _normalize_base_url(base_url),
                 json={
-                    "model": model,
+                    "model": default_model,
                     "messages": messages,
                     "temperature": 0.8,
                     "max_tokens": 200,
                 },
                 headers={
-                    "Authorization": f"Bearer {QWEN_API_KEY}",
+                    "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json"
                 }
             )

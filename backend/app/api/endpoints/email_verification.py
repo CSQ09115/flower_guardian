@@ -48,10 +48,15 @@ def send_verification_code(request: SendVerificationCodeRequest, db: Session = D
     db.add(verification)
     db.commit()
 
-    # 发送邮件
-    send_verification_email(request.email, code, purpose)
+    # 发送邮件；发送失败时回滚验证码记录并向调用方返回真实错误，
+    # 避免前端只看到“已发送”进入倒计时却永远收不到邮件
+    sent = send_verification_email(request.email, code, purpose)
+    if not sent:
+        db.delete(verification)
+        db.commit()
+        raise HTTPException(status_code=502, detail="邮件发送失败，请稍后重试或联系管理员检查 SMTP 配置")
 
-    return {"message": "Verification code sent"}
+    return {"message": "Verification code sent", "sent": True}
 
 
 @router.post("/verify-email")
@@ -130,7 +135,11 @@ def forgot_password(request: SendVerificationCodeRequest, db: Session = Depends(
     db.add(verification)
     db.commit()
 
-    # 发送邮件
-    send_verification_email(request.email, code, "password_reset")
+    # 发送邮件；发送失败时回滚验证码记录并向调用方返回真实错误
+    sent = send_verification_email(request.email, code, "password_reset")
+    if not sent:
+        db.delete(verification)
+        db.commit()
+        raise HTTPException(status_code=502, detail="邮件发送失败，请稍后重试或联系管理员检查 SMTP 配置")
 
-    return {"message": "Verification code sent"}
+    return {"message": "Verification code sent", "sent": True}

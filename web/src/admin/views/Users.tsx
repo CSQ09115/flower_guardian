@@ -16,9 +16,12 @@ const PAGE_SIZE = 10;
 const initials = (name: string): string => String(name || "?").trim().slice(0, 1).toUpperCase();
 
 export function Users(): JSX.Element {
-  const { data } = useAdminData();
+  const { data, batchRemove } = useAdminData();
   const [, setVersion] = useState(0);
   const [detailId, setDetailId] = useState<number | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const ordersByUser = new Map<number, typeof data.orders>();
   data.orders.forEach((order) => {
@@ -59,6 +62,17 @@ export function Users(): JSX.Element {
           <h1>用户管理</h1>
           <p>注册用户与其订单摘要。按后台口径，用户数统计的是所选区间内的新增注册，不是全量用户。</p>
         </div>
+        <div className="page-head__actions">
+          <button
+            className="btn btn--coral"
+            type="button"
+            disabled={!selected.size}
+            onClick={() => setBulkConfirm(true)}
+          >
+            <AdminIcon name="trash" size={15} />
+            批量删除{selected.size ? `（${selected.size}）` : ""}
+          </button>
+        </div>
       </div>
 
       <div className="kpis">
@@ -98,9 +112,23 @@ export function Users(): JSX.Element {
         <div id="u-body">
           {slice.length ? (
             <div className="table-wrap">
-              <table className="table" style={{ minWidth: "820px" }}>
+              <table className="table" style={{ minWidth: "860px" }}>
                 <thead>
                   <tr>
+                    <th style={{ width: "36px" }}>
+                      <input
+                        type="checkbox"
+                        aria-label="全选本页"
+                        checked={slice.length > 0 && slice.every((user) => selected.has(user.id))}
+                        onChange={(event) => {
+                          const next = new Set(selected);
+                          slice.forEach((user) =>
+                            event.target.checked ? next.add(user.id) : next.delete(user.id),
+                          );
+                          setSelected(next);
+                        }}
+                      />
+                    </th>
                     <th>用户</th>
                     <th>邮箱</th>
                     <th>注册时间</th>
@@ -120,6 +148,19 @@ export function Users(): JSX.Element {
                       .reduce((total, order) => total + order.total_amount, 0);
                     return (
                       <tr key={user.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`选择 ${user.username}`}
+                            checked={selected.has(user.id)}
+                            onChange={(event) => {
+                              const next = new Set(selected);
+                              if (event.target.checked) next.add(user.id);
+                              else next.delete(user.id);
+                              setSelected(next);
+                            }}
+                          />
+                        </td>
                         <td>
                           <div className="cell-main">
                             <span className="avatar">{initials(user.username)}</span>
@@ -273,6 +314,44 @@ export function Users(): JSX.Element {
             <b>还没有订单</b>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        open={bulkConfirm}
+        title="批量删除用户"
+        subtitle={`将调用 POST /api/admin/users/batch-delete 删除 ${selected.size} 个用户。`}
+        onClose={() => setBulkConfirm(false)}
+        footer={
+          <>
+            <button className="btn btn--ghost" type="button" onClick={() => setBulkConfirm(false)}>
+              取消
+            </button>
+            <button
+              className="btn btn--coral"
+              type="button"
+              disabled={bulkBusy}
+              onClick={async () => {
+                setBulkBusy(true);
+                try {
+                  await batchRemove("users", [...selected]);
+                  setSelected(new Set());
+                  setBulkConfirm(false);
+                  setVersion((v) => v + 1);
+                } catch (error) {
+                  setVersion((v) => v + 1);
+                } finally {
+                  setBulkBusy(false);
+                }
+              }}
+            >
+              确认删除
+            </button>
+          </>
+        }
+      >
+        <p style={{ color: "var(--muted)", fontSize: "13px" }}>
+          选中的 {selected.size} 个用户会被永久删除，其名下地址、收藏、提醒等关联数据将一并清理，此操作不可撤销。
+        </p>
       </Modal>
     </>
   );

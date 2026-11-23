@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta, time
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
@@ -47,6 +47,65 @@ class ProductStatItem(BaseModel):
 
 class ProductsResponse(BaseModel):
     items: list
+
+
+class DailyStatItem(BaseModel):
+    date: str
+    new_users: int
+    revenue: float
+    orders: int
+
+
+class DailyStatsResponse(BaseModel):
+    items: list
+
+
+# 计入收入的订单状态：已确认及之后（pending 未确认、cancelled 已取消不计入）
+REVENUE_ORDER_STATUSES = ("confirmed", "shipped", "completed")
+
+
+@router.get("/daily", response_model=DailyStatsResponse)
+def get_daily_stats(
+    days: int = Query(7, ge=1, le=31),
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin_user)
+):
+    """按天统计新增注册用户数与有效订单收入，无数据的日期补 0。"""
+    today = datetime.utcnow().date()
+    start_day = today - timedelta(days=days - 1)
+    start_dt = datetime.combine(start_day, time.min)
+
+    buckets = {}
+    for i in range(days):
+        day = start_day + timedelta(days=i)
+        buckets[day.isoformat()] = {"new_users": 0, "revenue": 0.0, "orders": 0}
+
+    user_rows = db.query(User.created_at).filter(User.created_at >= start_dt).all()
+    for (created_at,) in user_rows:
+        key = created_at.date().isoformat()
+        if key in buckets:
+            buckets[key]["new_users"] += 1
+
+    order_rows = db.query(Order.created_at, Order.total_amount).filter(
+        Order.created_at >= start_dt,
+        Order.status.in_(REVENUE_ORDER_STATUSES)
+    ).all()
+    for created_at, total_amount in order_rows:
+        key = created_at.date().isoformat()
+        if key in buckets:
+            buckets[key]["revenue"] += float(total_amount)
+            buckets[key]["orders"] += 1
+
+    items = [
+        DailyStatItem(
+            date=key,
+            new_users=value["new_users"],
+            revenue=round(value["revenue"], 2),
+            orders=value["orders"]
+        )
+        for key, value in buckets.items()
+    ]
+    return DailyStatsResponse(items=items)
 
 
 @router.get("/overview", response_model=OverviewResponse)

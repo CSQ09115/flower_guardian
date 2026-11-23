@@ -44,6 +44,9 @@ export function latestReading(device: Device): Reading | null {
 }
 
 export function isOnline(device: Device, now: number = Date.now()): boolean {
+  /* The backend computes `online` from its own clock (90s window); trust it when
+     present, fall back to the local `last_seen` math for older fixtures. */
+  if (device?.online != null) return device.online;
   if (!device || !device.last_seen) return false;
   return now - new Date(device.last_seen).getTime() < 90 * 1000;
 }

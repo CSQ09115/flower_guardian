@@ -31,11 +31,14 @@ function PlantThumb({ plant }: { plant: Plant }): JSX.Element {
 }
 
 export function Plants(): JSX.Element {
-  const { data, toast, savePlant, removePlant } = useAdminData();
+  const { data, toast, savePlant, removePlant, batchRemove } = useAdminData();
   const [, setVersion] = useState(0);
   const [editing, setEditing] = useState<Plant | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleting, setDeleting] = useState<Plant | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
+  const [bulkConfirm, setBulkConfirm] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   const plants = data.plants;
   const categories = [
@@ -67,6 +70,15 @@ export function Plants(): JSX.Element {
           <p>识别结果背后的养护知识：光照、浇水、温度与常见错误。YOLO 类别 ID 对应识别模型的输出类别。</p>
         </div>
         <div className="page-head__actions">
+          <button
+            className="btn btn--coral"
+            type="button"
+            disabled={!selected.size}
+            onClick={() => setBulkConfirm(true)}
+          >
+            <AdminIcon name="trash" size={15} />
+            批量删除{selected.size ? `（${selected.size}）` : ""}
+          </button>
           <button
             className="btn"
             type="button"
@@ -156,6 +168,20 @@ export function Plants(): JSX.Element {
               <table className="table" style={{ minWidth: "940px" }}>
                 <thead>
                   <tr>
+                    <th style={{ width: "36px" }}>
+                      <input
+                        type="checkbox"
+                        aria-label="全选本页"
+                        checked={slice.length > 0 && slice.every((plant) => selected.has(plant.id))}
+                        onChange={(event) => {
+                          const next = new Set(selected);
+                          slice.forEach((plant) =>
+                            event.target.checked ? next.add(plant.id) : next.delete(plant.id),
+                          );
+                          setSelected(next);
+                        }}
+                      />
+                    </th>
                     <th>植物</th>
                     <th>分类</th>
                     <th>养护难度</th>
@@ -172,6 +198,19 @@ export function Plants(): JSX.Element {
                     const care = CARE_LEVEL[plant.care_level] || CARE_LEVEL[1];
                     return (
                       <tr key={plant.id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            aria-label={`选择 ${plant.name}`}
+                            checked={selected.has(plant.id)}
+                            onChange={(event) => {
+                              const next = new Set(selected);
+                              if (event.target.checked) next.add(plant.id);
+                              else next.delete(plant.id);
+                              setSelected(next);
+                            }}
+                          />
+                        </td>
                         <td>
                           <div className="cell-main">
                             <PlantThumb plant={plant} />
@@ -293,6 +332,45 @@ export function Plants(): JSX.Element {
       >
         <p style={{ color: "var(--muted)", fontSize: "13px" }}>
           确定删除「{deleting?.name}」？已绑定该植物的商品会失去关联显示。
+        </p>
+      </Modal>
+
+      <Modal
+        open={bulkConfirm}
+        title="批量删除植物条目"
+        subtitle={`将调用 POST /api/admin/plants/batch-delete 删除 ${selected.size} 条条目。`}
+        onClose={() => setBulkConfirm(false)}
+        footer={
+          <>
+            <button className="btn btn--ghost" type="button" onClick={() => setBulkConfirm(false)}>
+              取消
+            </button>
+            <button
+              className="btn btn--coral"
+              type="button"
+              disabled={bulkBusy}
+              onClick={async () => {
+                setBulkBusy(true);
+                try {
+                  await batchRemove("plants", [...selected]);
+                  setSelected(new Set());
+                  setBulkConfirm(false);
+                  page = 1;
+                  rerender();
+                } catch (error) {
+                  toast((error as Error).message, "error");
+                } finally {
+                  setBulkBusy(false);
+                }
+              }}
+            >
+              确认删除
+            </button>
+          </>
+        }
+      >
+        <p style={{ color: "var(--muted)", fontSize: "13px" }}>
+          选中的 {selected.size} 个植物条目会被永久删除（含关联展示），此操作不可撤销。
         </p>
       </Modal>
     </>
