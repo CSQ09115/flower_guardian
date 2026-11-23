@@ -19,7 +19,7 @@ module.exports = {
         // 背景色
         background: '#fafafa',
         surface: '#ffffff',
-        surfaceElevated: '#fffbf5',
+        surfaceElevated: '#ffffff',
         // 文字色
         text: '#333333',
         'text-secondary': '#666666',

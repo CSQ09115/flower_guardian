@@ -10,7 +10,7 @@ export const colors = {
   accentLight: '#ffe58f',       // 暖黄色浅色
   background: '#fafafa',        // 背景色
   surface: '#ffffff',           // 卡片/表面色
-  surfaceElevated: '#fffbf5',   // 浮起表面
+  surfaceElevated: '#ffffff',  // 浮起表面（纯白，不用暖白）
   text: '#333333',              // 主要文字
   'text-secondary': '#666666',  // 次要文字
   'text-tertiary': '#999999',   // 辅助文字
