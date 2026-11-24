@@ -13,11 +13,16 @@ import { Modal } from "../../shared/components/Modal";
 import { dateTime, DEVICE_STATE, downloadCsv, num, relative, timeOnly, toCsv } from "../data/util";
 import type { Reading, Thresholds } from "../data/types";
 
-type MetricKey = "moisture" | "temp" | "lux";
+type MetricKey = "moisture" | "temp" | "airTemp" | "airHumidity" | "lux";
 
-const METRICS: Record<MetricKey, { label: string; unit: string; color: string; field: "soil_moisture" | "soil_temp" | "light_lux"; digits: number }> = {
+const METRICS: Record<
+  MetricKey,
+  { label: string; unit: string; color: string; field: "soil_moisture" | "soil_temp" | "air_temp" | "air_humidity" | "light_lux"; digits: number }
+> = {
   moisture: { label: "土壤湿度", unit: "%", color: VIZ.leaf, field: "soil_moisture", digits: 1 },
   temp: { label: "土壤温度", unit: "℃", color: VIZ.coral, field: "soil_temp", digits: 1 },
+  airTemp: { label: "空气温度", unit: "℃", color: VIZ.coral, field: "air_temp", digits: 1 },
+  airHumidity: { label: "空气湿度", unit: "%", color: VIZ.pink, field: "air_humidity", digits: 1 },
   lux: { label: "光照", unit: " lx", color: VIZ.green, field: "light_lux", digits: 0 },
 };
 
@@ -98,6 +103,10 @@ export function DeviceDetail(): JSX.Element {
     moistureMax: t.moistureMax,
     tempMin: t.tempMin,
     tempMax: t.tempMax,
+    airTempMin: t.airTempMin,
+    airTempMax: t.airTempMax,
+    airHumidityMin: t.airHumidityMin,
+    airHumidityMax: t.airHumidityMax,
     luxMin: t.luxMin,
     luxMax: t.luxMax,
     alarm: t.alarm,
@@ -109,20 +118,27 @@ export function DeviceDetail(): JSX.Element {
 
   const m = METRICS[metric];
   const chartReadings = readings.filter((r) => now - new Date(r.created_at).getTime() < 24 * 3600 * 1000);
-  const chartValues = chartReadings.map((r) => r[m.field]);
+  const chartValues = chartReadings.map((r) => r[m.field] ?? null);
   const band =
     metric === "moisture"
       ? { from: t.moistureMin, to: t.moistureMax }
       : metric === "temp"
         ? { from: t.tempMin, to: t.tempMax }
-        : null;
-
+        : metric === "airTemp"
+          ? { from: t.airTempMin, to: t.airTempMax }
+          : metric === "airHumidity"
+            ? { from: t.airHumidityMin, to: t.airHumidityMax }
+            : null;
   const saveThresholds = async (): Promise<void> => {
     const next: Thresholds = {
       moistureMin: Number(form.moistureMin),
       moistureMax: Number(form.moistureMax),
       tempMin: Number(form.tempMin),
       tempMax: Number(form.tempMax),
+      airTempMin: Number(form.airTempMin),
+      airTempMax: Number(form.airTempMax),
+      airHumidityMin: Number(form.airHumidityMin),
+      airHumidityMax: Number(form.airHumidityMax),
       luxMin: Number(form.luxMin),
       luxMax: Number(form.luxMax),
       alarm: form.alarm,
@@ -130,6 +146,8 @@ export function DeviceDetail(): JSX.Element {
     if (
       next.moistureMin >= next.moistureMax ||
       next.tempMin >= next.tempMax ||
+      next.airTempMin >= next.airTempMax ||
+      next.airHumidityMin >= next.airHumidityMax ||
       next.luxMin >= next.luxMax
     ) {
       toast("下限必须小于上限", "error");
@@ -200,11 +218,13 @@ export function DeviceDetail(): JSX.Element {
               downloadCsv(
                 `${device.code}-readings.csv`,
                 toCsv([
-                  ["时间", "土壤湿度(%)", "土壤温度(℃)", "光照(lx)", "固件", "IP"],
+                  ["时间", "土壤湿度(%)", "土壤温度(℃)", "空气温度(℃)", "空气湿度(%)", "光照(lx)", "固件", "IP"],
                   ...readings.map((r) => [
                     dateTime(r.created_at),
                     r.soil_moisture ?? "",
                     r.soil_temp ?? "",
+                    r.air_temp ?? "",
+                    r.air_humidity ?? "",
                     r.light_lux ?? "",
                     r.firmware || "",
                     r.ip_address || "",
@@ -303,6 +323,37 @@ export function DeviceDetail(): JSX.Element {
           color={VIZ.coral}
         />
         <SensorTile
+          label="空气温度"
+          icon="thermometer"
+          value={latest?.air_temp ?? null}
+          unit="℃"
+          digits={1}
+          min={t.airTempMin}
+          max={t.airTempMax}
+          history={window24.map((r) => r.air_temp ?? null)}
+          abnormal={
+            latest?.air_temp != null &&
+            (latest.air_temp < t.airTempMin || latest.air_temp > t.airTempMax)
+          }
+          color={VIZ.coral}
+        />
+        <SensorTile
+          label="空气湿度"
+          icon="droplet"
+          value={latest?.air_temp == null && latest?.air_humidity == null ? null : latest?.air_humidity ?? null}
+          unit="%"
+          digits={1}
+          min={t.airHumidityMin}
+          max={t.airHumidityMax}
+          history={window24.map((r) => r.air_humidity ?? null)}
+          abnormal={
+            latest?.air_humidity != null &&
+            (latest.air_humidity < t.airHumidityMin || latest.air_humidity > t.airHumidityMax)
+          }
+          missing={latest?.air_humidity == null && latest?.air_temp == null}
+          color={VIZ.pink}
+        />
+        <SensorTile
           label="光照"
           icon="sun"
           value={latest?.light_lux ?? null}
@@ -369,7 +420,11 @@ export function DeviceDetail(): JSX.Element {
                     },
                   ]}
                   height={236}
-                  yMin={metric === "temp" ? Math.min(0, ...chartValues.filter((v) => v != null)) : 0}
+                  yMin={
+                    metric === "temp" || metric === "airTemp"
+                      ? Math.min(0, ...chartValues.filter((v) => v != null))
+                      : 0
+                  }
                   yMax={
                     metric === "lux"
                       ? Math.max(1000, ...chartValues.filter((v) => v != null))
@@ -404,6 +459,30 @@ export function DeviceDetail(): JSX.Element {
                     <span>
                       <i className="area" />
                       {t.tempMin}–{t.tempMax}℃ 目标区间
+                    </span>
+                  </>
+                ) : null}
+                {metric === "airTemp" ? (
+                  <>
+                    <span>
+                      <i style={{ background: "var(--viz-2)" }} />
+                      空气温度
+                    </span>
+                    <span>
+                      <i className="area" />
+                      {t.airTempMin}–{t.airTempMax}℃ 目标区间
+                    </span>
+                  </>
+                ) : null}
+                {metric === "airHumidity" ? (
+                  <>
+                    <span>
+                      <i style={{ background: VIZ.pink }} />
+                      空气湿度
+                    </span>
+                    <span>
+                      <i className="area" />
+                      {t.airHumidityMin}–{t.airHumidityMax}% 目标区间
                     </span>
                   </>
                 ) : null}
@@ -491,6 +570,56 @@ export function DeviceDetail(): JSX.Element {
                   icon={<AdminIcon name="thermometer" size={13} />}
                 />
               </div>
+              <div className="fieldset-title">空气温度（℃）</div>
+              <div className="form-row">
+                <Field
+                  label="下限"
+                  name="airTempMin"
+                  type="number"
+                  value={String(form.airTempMin)}
+                  onChange={(value) => setThresholds({ ...form, airTempMin: Number(value) })}
+                  min={-10}
+                  max={60}
+                  step={0.5}
+                  icon={<AdminIcon name="thermometer" size={13} />}
+                />
+                <Field
+                  label="上限"
+                  name="airTempMax"
+                  type="number"
+                  value={String(form.airTempMax)}
+                  onChange={(value) => setThresholds({ ...form, airTempMax: Number(value) })}
+                  min={-10}
+                  max={60}
+                  step={0.5}
+                  icon={<AdminIcon name="thermometer" size={13} />}
+                />
+              </div>
+              <div className="fieldset-title">空气湿度（%）</div>
+              <div className="form-row">
+                <Field
+                  label="下限"
+                  name="airHumidityMin"
+                  type="number"
+                  value={String(form.airHumidityMin)}
+                  onChange={(value) => setThresholds({ ...form, airHumidityMin: Number(value) })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  icon={<AdminIcon name="droplet" size={13} />}
+                />
+                <Field
+                  label="上限"
+                  name="airHumidityMax"
+                  type="number"
+                  value={String(form.airHumidityMax)}
+                  onChange={(value) => setThresholds({ ...form, airHumidityMax: Number(value) })}
+                  min={0}
+                  max={100}
+                  step={1}
+                  icon={<AdminIcon name="droplet" size={13} />}
+                />
+              </div>
               <div className="fieldset-title">光照（lx）</div>
               <div className="form-row">
                 <Field
@@ -570,12 +699,14 @@ export function DeviceDetail(): JSX.Element {
           <div className="card__body card__body--flush">
             {readings.length ? (
               <div className="table-wrap">
-                <table className="table" style={{ minWidth: "560px" }}>
+                <table className="table" style={{ minWidth: "720px" }}>
                   <thead>
                     <tr>
                       <th>时间</th>
                       <th className="num">土壤湿度</th>
                       <th className="num">土壤温度</th>
+                      <th className="num">空气温度</th>
+                      <th className="num">空气湿度</th>
                       <th className="num">光照</th>
                       <th>状态</th>
                     </tr>
@@ -592,6 +723,12 @@ export function DeviceDetail(): JSX.Element {
                           </td>
                           <td className="num">
                             {reading.soil_temp != null ? `${reading.soil_temp.toFixed(1)}℃` : "—"}
+                          </td>
+                          <td className="num">
+                            {reading.air_temp != null ? `${reading.air_temp.toFixed(1)}℃` : "—"}
+                          </td>
+                          <td className="num">
+                            {reading.air_humidity != null ? `${reading.air_humidity.toFixed(1)}%` : "—"}
                           </td>
                           <td className="num">
                             {reading.light_lux != null ? `${num(reading.light_lux)} lx` : "无读数"}
@@ -730,6 +867,8 @@ Content-Type: application/json
 {
   "soil_moisture": ${latest?.soil_moisture ?? 0},
   "soil_temp": ${latest?.soil_temp ?? 0},
+  "air_temp": ${latest?.air_temp == null ? "null" : latest.air_temp},
+  "air_humidity": ${latest?.air_humidity == null ? "null" : latest.air_humidity},
   "light_lux": ${latest?.light_lux == null ? "null" : latest.light_lux},
   "firmware": "${device.firmware || "0.4.0"}",
   "ip_address": "${device.ip_address || ""}"
@@ -815,7 +954,7 @@ function SensorTile({
   min,
   max,
   history,
-  abnormal,
+  abnormal = false,
   missing = false,
   night = false,
   color,
@@ -825,10 +964,10 @@ function SensorTile({
   value: number | null;
   unit: string;
   digits: number;
-  min: number;
-  max: number;
+  min?: number;
+  max?: number;
   history: (number | null)[];
-  abnormal: boolean;
+  abnormal?: boolean;
   missing?: boolean;
   night?: boolean;
   color: string;
@@ -849,7 +988,7 @@ function SensorTile({
         ) : abnormal ? (
           <Badge tone="danger">超出阈值</Badge>
         ) : (
-          <Badge tone="ok">阈值内</Badge>
+          <Badge tone="ok">正常</Badge>
         )}
       </div>
       <div className="sensor-tile__value">
@@ -857,7 +996,13 @@ function SensorTile({
         <small>{unit}</small>
       </div>
       <div className="sensor-tile__meta">
-        目标 {num(min)}–{num(max)} {unit}
+        {min != null && max != null ? (
+          <>
+            目标 {num(min)}–{num(max)} {unit}
+          </>
+        ) : (
+          <>环境读数 · 无阈值判定</>
+        )}
         {lo != null ? ` · 24h ${Number(lo).toFixed(digits)}–${Number(hi).toFixed(digits)}` : ""}
       </div>
       <div style={{ marginTop: "8px" }}>
@@ -877,6 +1022,12 @@ function RowStatus({ reading, thresholds }: { reading: Reading; thresholds: Thre
   if (reading.soil_moisture != null && reading.soil_moisture < thresholds.moistureMin) {
     return <Badge tone="danger">湿度偏低</Badge>;
   }
+  if (reading.air_temp != null && (reading.air_temp < thresholds.airTempMin || reading.air_temp > thresholds.airTempMax)) {
+    return <Badge tone="warn">气温越界</Badge>;
+  }
+  if (reading.air_humidity != null && (reading.air_humidity < thresholds.airHumidityMin || reading.air_humidity > thresholds.airHumidityMax)) {
+    return <Badge tone="warn">气湿越界</Badge>;
+  }
   if (reading.light_lux == null) return <Badge tone="warn">光照无读数</Badge>;
   if (
     reading.soil_temp != null &&
@@ -891,6 +1042,8 @@ function SummaryCard({ rows }: { rows: Reading[] }): JSX.Element {
   const specs = [
     { key: "soil_moisture", label: "土壤湿度", unit: "%", digits: 1, icon: "droplet" },
     { key: "soil_temp", label: "土壤温度", unit: "℃", digits: 1, icon: "thermometer" },
+    { key: "air_temp", label: "空气温度", unit: "℃", digits: 1, icon: "thermometer" },
+    { key: "air_humidity", label: "空气湿度", unit: "%", digits: 1, icon: "droplet" },
     { key: "light_lux", label: "光照", unit: " lx", digits: 0, icon: "sun" },
   ] as const;
 

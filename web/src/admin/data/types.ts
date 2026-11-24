@@ -107,6 +107,10 @@ export type Thresholds = {
   moistureMax: number;
   tempMin: number;
   tempMax: number;
+  airTempMin: number;
+  airTempMax: number;
+  airHumidityMin: number;
+  airHumidityMax: number;
   luxMin: number;
   luxMax: number;
   alarm: boolean;

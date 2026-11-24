@@ -40,11 +40,15 @@ class Device(Base):
     report_interval = Column(Integer, default=10)        # 上报周期（秒）
     enabled = Column(Boolean, default=True)              # 启用/停用
 
-    # 告警阈值：湿度 % / 土温 ℃ / 光照 lx
+    # 告警阈值：湿度 % / 土温 ℃ / 空气温湿度 / 光照 lx
     moisture_min = Column(Float, default=35.0)
     moisture_max = Column(Float, default=70.0)
     temp_min = Column(Float, default=12.0)
     temp_max = Column(Float, default=30.0)
+    air_temp_min = Column(Float, default=5.0)
+    air_temp_max = Column(Float, default=35.0)
+    air_humidity_min = Column(Float, default=20.0)
+    air_humidity_max = Column(Float, default=90.0)
     lux_min = Column(Float, default=500.0)
     lux_max = Column(Float, default=30000.0)
     alarm_enabled = Column(Boolean, default=True)

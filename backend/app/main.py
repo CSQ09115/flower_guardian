@@ -77,6 +77,10 @@ _DEVICE_COLUMNS = [
     ("moisture_max", "FLOAT DEFAULT 70.0"),
     ("temp_min", "FLOAT DEFAULT 12.0"),
     ("temp_max", "FLOAT DEFAULT 30.0"),
+    ("air_temp_min", "FLOAT DEFAULT 5.0"),
+    ("air_temp_max", "FLOAT DEFAULT 35.0"),
+    ("air_humidity_min", "FLOAT DEFAULT 20.0"),
+    ("air_humidity_max", "FLOAT DEFAULT 90.0"),
     ("lux_min", "FLOAT DEFAULT 500.0"),
     ("lux_max", "FLOAT DEFAULT 30000.0"),
     ("alarm_enabled", "BOOLEAN DEFAULT TRUE"),
@@ -208,6 +212,10 @@ async def add_websocket_cors_headers(request: Request, call_next):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, CONNECT"
     response.headers["Access-Control-Allow-Headers"] = "*"
     response.headers["Access-Control-Allow-Credentials"] = "false"
+    # 静态图片禁用强缓存：本地图片更新后浏览器通过 ETag/Last-Modified 重新校验（304），
+    # 保证同名文件被替换后前台能立即看到新图
+    if request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
     return response
 
 # Include API routes

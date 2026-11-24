@@ -14,14 +14,16 @@ let filter: "open" | "ack" | "all" = "open";
 const METRIC_LABEL: Record<string, string> = {
   soil_moisture: "土壤湿度",
   soil_temp: "土壤温度",
+  air_temp: "空气温度",
+  air_humidity: "空气湿度",
   light_lux: "光照",
   online: "设备连接",
 };
 
 function metricValue(alert: Alert, value: number | null = alert.value): string {
   if (value == null) return "—";
-  if (alert.metric === "soil_moisture") return `${Number(value).toFixed(1)}%`;
-  if (alert.metric === "soil_temp") return `${Number(value).toFixed(1)}℃`;
+  if (alert.metric === "soil_moisture" || alert.metric === "air_humidity") return `${Number(value).toFixed(1)}%`;
+  if (alert.metric === "soil_temp" || alert.metric === "air_temp") return `${Number(value).toFixed(1)}℃`;
   if (alert.metric === "light_lux") return `${num(value)} lx`;
   return String(value);
 }

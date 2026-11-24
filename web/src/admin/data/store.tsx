@@ -128,6 +128,10 @@ type RawDevice = Omit<Device, "thresholds" | "calibration" | "readings" | "last_
   moisture_max?: number;
   temp_min?: number;
   temp_max?: number;
+  air_temp_min?: number;
+  air_temp_max?: number;
+  air_humidity_min?: number;
+  air_humidity_max?: number;
   lux_min?: number;
   lux_max?: number;
   alarm_enabled?: boolean;
@@ -160,6 +164,10 @@ export const normalizeDevice = (row: RawDevice): Device => {
       moistureMax: Number(row.moisture_max ?? 70),
       tempMin: Number(row.temp_min ?? 12),
       tempMax: Number(row.temp_max ?? 30),
+      airTempMin: Number(row.air_temp_min ?? 5),
+      airTempMax: Number(row.air_temp_max ?? 35),
+      airHumidityMin: Number(row.air_humidity_min ?? 20),
+      airHumidityMax: Number(row.air_humidity_max ?? 90),
       luxMin: Number(row.lux_min ?? 500),
       luxMax: Number(row.lux_max ?? 30000),
       alarm: row.alarm_enabled !== false,

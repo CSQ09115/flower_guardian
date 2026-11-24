@@ -31,6 +31,54 @@ PRODUCTS = [
         "status": "active"
     },
     {
+        "name": "条纹十二卷多肉盆栽",
+        "description": "薄荷绿陶瓷盆栽条纹十二卷，耐旱好养，适合办公桌、窗台点缀",
+        "price": 45.00,
+        "stock": 60,
+        "image_url": "/static/products/succulent-pot.jpg",
+        "status": "active"
+    },
+    {
+        "name": "仙人掌盆栽（红陶盆）",
+        "description": "经典红陶盆栽仙人掌，几乎不用打理，适合新手和忙碌人群",
+        "price": 28.00,
+        "stock": 80,
+        "image_url": "/static/products/cactus-pot.jpg",
+        "status": "active"
+    },
+    {
+        "name": "斑纹芦荟盆栽（水泥盆）",
+        "description": "斑纹芦荟配素色水泥盆，净化空气，叶汁还可用于轻微烫伤护理",
+        "price": 39.00,
+        "stock": 50,
+        "image_url": "/static/products/aloe-pot.jpg",
+        "status": "active"
+    },
+    {
+        "name": "白掌盆栽（一帆风顺）",
+        "description": "自带乳白色佛焰苞花朵，耐阴好养，适合客厅、卧室半阴环境",
+        "price": 52.00,
+        "stock": 35,
+        "image_url": "/static/products/peace-lily.jpg",
+        "status": "active"
+    },
+    {
+        "name": "真柏盆景",
+        "description": "造型真柏盆景，枝叶茂密四季常青，适合书房、玄关摆件，附赠养护手册",
+        "price": 128.00,
+        "stock": 12,
+        "image_url": "/static/products/bonsai.jpg",
+        "status": "active"
+    },
+    {
+        "name": "多肉营养土+园艺铲套装",
+        "description": "颗粒营养土搭配加大铲土器，透气保水，换盆上土一步到位",
+        "price": 25.90,
+        "stock": 100,
+        "image_url": "/static/products/soil-shovel-set.jpg",
+        "status": "active"
+    },
+    {
         "name": "多肉专用营养土",
         "description": "透气性好，适合多肉植物、仙人掌等肉质植物。5斤装",
         "price": 15.90,
@@ -106,17 +154,14 @@ PRODUCTS = [
 
 
 def seed_products(db: Session):
-    """插入商品数据"""
+    """按名称补插缺失商品（已有商品保持不动，避免重复插入）"""
     from app.models.product import Product
 
-    # 检查是否已有商品
-    existing = db.query(Product).count()
-    if existing > 0:
-        print(f"数据库中已有 {existing} 个商品，跳过插入")
-        return
-
-    # 插入商品
+    existing_names = {name for (name,) in db.query(Product.name).all()}
+    inserted = 0
     for p in PRODUCTS:
+        if p["name"] in existing_names:
+            continue
         product = Product(
             name=p["name"],
             description=p["description"],
@@ -126,9 +171,10 @@ def seed_products(db: Session):
             status=p["status"]
         )
         db.add(product)
+        inserted += 1
 
     db.commit()
-    print(f"成功插入 {len(PRODUCTS)} 个商品")
+    print(f"成功插入 {inserted} 个商品（已有 {len(existing_names)} 个跳过）")
 
 
 if __name__ == "__main__":

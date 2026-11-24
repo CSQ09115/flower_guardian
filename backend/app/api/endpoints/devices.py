@@ -320,6 +320,10 @@ def _thresholds(device: Device) -> ThresholdPayload:
         moistureMax=device.moisture_max if device.moisture_max is not None else 70,
         tempMin=device.temp_min if device.temp_min is not None else 12,
         tempMax=device.temp_max if device.temp_max is not None else 30,
+        airTempMin=device.air_temp_min if device.air_temp_min is not None else 5,
+        airTempMax=device.air_temp_max if device.air_temp_max is not None else 35,
+        airHumidityMin=device.air_humidity_min if device.air_humidity_min is not None else 20,
+        airHumidityMax=device.air_humidity_max if device.air_humidity_max is not None else 90,
         luxMin=device.lux_min if device.lux_min is not None else 500,
         luxMax=device.lux_max if device.lux_max is not None else 30000,
         alarm=bool(device.alarm_enabled),
@@ -503,6 +507,28 @@ def _evaluate(db: Session, device: Device, reading: SensorReading) -> None:
         else:
             _clear_alert(db, device, "soil_temp")
 
+    at = reading.air_temp
+    if at is not None:
+        if at < (device.air_temp_min if device.air_temp_min is not None else 5):
+            _upsert_alert(db, device, "air_temp", "空气温度", at, device.air_temp_min,
+                          "below", "warn", f"低于下限 {(device.air_temp_min or 5):.1f}℃，注意寒害，建议移入室内")
+        elif at > (device.air_temp_max if device.air_temp_max is not None else 35):
+            _upsert_alert(db, device, "air_temp", "空气温度", at, device.air_temp_max,
+                          "above", "warn", f"高于上限 {(device.air_temp_max or 35):.1f}℃，注意遮阴通风")
+        else:
+            _clear_alert(db, device, "air_temp")
+
+    ah = reading.air_humidity
+    if ah is not None:
+        if ah < (device.air_humidity_min if device.air_humidity_min is not None else 20):
+            _upsert_alert(db, device, "air_humidity", "空气湿度", ah, device.air_humidity_min,
+                          "below", "warn", f"低于下限 {(device.air_humidity_min or 20):.0f}%，空气干燥，可喷雾加湿")
+        elif ah > (device.air_humidity_max if device.air_humidity_max is not None else 90):
+            _upsert_alert(db, device, "air_humidity", "空气湿度", ah, device.air_humidity_max,
+                          "above", "warn", f"高于上限 {(device.air_humidity_max or 90):.0f}%，湿度过大，注意通风防霉")
+        else:
+            _clear_alert(db, device, "air_humidity")
+
     lux = reading.light_lux
     if lux is None:
         _upsert_alert(db, device, "light_lux", "光照传感器", None, device.lux_min,
@@ -572,12 +598,20 @@ def _apply_thresholds(device: Device, t: ThresholdPayload) -> None:
         raise HTTPException(status_code=400, detail="湿度下限必须小于上限")
     if t.tempMin >= t.tempMax:
         raise HTTPException(status_code=400, detail="土温下限必须小于上限")
+    if t.airTempMin >= t.airTempMax:
+        raise HTTPException(status_code=400, detail="空气温度下限必须小于上限")
+    if t.airHumidityMin >= t.airHumidityMax:
+        raise HTTPException(status_code=400, detail="空气湿度下限必须小于上限")
     if t.luxMin >= t.luxMax:
         raise HTTPException(status_code=400, detail="光照下限必须小于上限")
     device.moisture_min = t.moistureMin
     device.moisture_max = t.moistureMax
     device.temp_min = t.tempMin
     device.temp_max = t.tempMax
+    device.air_temp_min = t.airTempMin
+    device.air_temp_max = t.airTempMax
+    device.air_humidity_min = t.airHumidityMin
+    device.air_humidity_max = t.airHumidityMax
     device.lux_min = t.luxMin
     device.lux_max = t.luxMax
     device.alarm_enabled = t.alarm

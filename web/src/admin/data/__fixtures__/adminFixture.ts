@@ -1,4 +1,4 @@
-/* Deterministic fixture for the selector tests. Never imported by the app, so it
+﻿/* Deterministic fixture for the selector tests. Never imported by the app, so it
    stays out of the production bundle: the admin console only ever renders rows
    returned by the PostgreSQL-backed API.
 
@@ -253,42 +253,42 @@ const DEVICE_SEED: readonly DeviceSeed[] = [
   {
     code: "FG-ESP32-001", name: "客厅 · 绿萝", location: "客厅南窗", firmware: "0.4.0",
     ip: "192.168.43.77", online: true, lastSeenSec: 6,
-    thresholds: { moistureMin: 35, moistureMax: 70, tempMin: 12, tempMax: 30, luxMin: 500, luxMax: 30000, alarm: true },
+    thresholds: { moistureMin: 35, moistureMax: 70, tempMin: 12, tempMax: 30, airTempMin: 5, airTempMax: 35, airHumidityMin: 20, airHumidityMax: 90, luxMin: 500, luxMax: 30000, alarm: true },
     calibration: { airRaw: 3200, waterRaw: 1312, source: "NVS soil-cal" },
     baseMoisture: 52, waterEvents: [7.4, 19.2], luxPeak: 8600, tempBase: 23.4,
   },
   {
     code: "FG-ESP32-002", name: "书房 · 龟背竹", location: "书房东侧", firmware: "0.4.0",
     ip: "192.168.43.81", online: true, lastSeenSec: 22,
-    thresholds: { moistureMin: 40, moistureMax: 75, tempMin: 14, tempMax: 30, luxMin: 800, luxMax: 26000, alarm: true },
+    thresholds: { moistureMin: 40, moistureMax: 75, tempMin: 14, tempMax: 30, airTempMin: 5, airTempMax: 35, airHumidityMin: 20, airHumidityMax: 90, luxMin: 800, luxMax: 26000, alarm: true },
     calibration: { airRaw: 3200, waterRaw: 1288, source: "NVS soil-cal" },
     baseMoisture: 61, waterEvents: [8.2], luxPeak: 5200, tempBase: 22.8,
   },
   {
     code: "FG-ESP32-003", name: "阳台 · 薄荷", location: "南阳台", firmware: "0.4.0",
     ip: "192.168.43.93", online: true, lastSeenSec: 41,
-    thresholds: { moistureMin: 45, moistureMax: 80, tempMin: 15, tempMax: 32, luxMin: 3000, luxMax: 60000, alarm: true },
+    thresholds: { moistureMin: 45, moistureMax: 80, tempMin: 15, tempMax: 32, airTempMin: 5, airTempMax: 35, airHumidityMin: 20, airHumidityMax: 90, luxMin: 3000, luxMax: 60000, alarm: true },
     calibration: { airRaw: 3186, waterRaw: 1264, source: "NVS soil-cal" },
     baseMoisture: 27, waterEvents: [9.6], luxPeak: 28400, tempBase: 25.6, dry: true,
   },
   {
     code: "FG-ESP32-004", name: "卧室 · 白掌", location: "卧室飘窗", firmware: "0.3.2",
     ip: "192.168.43.104", online: false, lastSeenSec: 3 * 3600 + 20 * 60,
-    thresholds: { moistureMin: 40, moistureMax: 75, tempMin: 14, tempMax: 28, luxMin: 800, luxMax: 20000, alarm: true },
+    thresholds: { moistureMin: 40, moistureMax: 75, tempMin: 14, tempMax: 28, airTempMin: 5, airTempMax: 35, airHumidityMin: 20, airHumidityMax: 90, luxMin: 800, luxMax: 20000, alarm: true },
     calibration: { airRaw: 3200, waterRaw: 1300, source: "出厂默认" },
     baseMoisture: 44, waterEvents: [], luxPeak: 3800, tempBase: 21.9,
   },
   {
     code: "FG-ESP32-005", name: "玄关 · 虎尾兰", location: "入户玄关", firmware: "0.4.0",
     ip: "192.168.43.118", online: true, lastSeenSec: 12,
-    thresholds: { moistureMin: 15, moistureMax: 45, tempMin: 10, tempMax: 30, luxMin: 200, luxMax: 20000, alarm: true },
+    thresholds: { moistureMin: 15, moistureMax: 45, tempMin: 10, tempMax: 30, airTempMin: 5, airTempMax: 35, airHumidityMin: 20, airHumidityMax: 90, luxMin: 200, luxMax: 20000, alarm: true },
     calibration: { airRaw: 3214, waterRaw: 1276, source: "NVS soil-cal" },
     baseMoisture: 22, waterEvents: [], luxPeak: 0, tempBase: 22.1, noLightSensor: true,
   },
   {
     code: "FG-ESP32-006", name: "办公室 · 发财树", location: "办公室茶水间", firmware: "0.3.2",
     ip: "192.168.43.126", online: false, lastSeenSec: 26 * 3600 + 48 * 60,
-    thresholds: { moistureMin: 30, moistureMax: 65, tempMin: 12, tempMax: 30, luxMin: 500, luxMax: 18000, alarm: true },
+    thresholds: { moistureMin: 30, moistureMax: 65, tempMin: 12, tempMax: 30, airTempMin: 5, airTempMax: 35, airHumidityMin: 20, airHumidityMax: 90, luxMin: 500, luxMax: 18000, alarm: true },
     calibration: { airRaw: 3200, waterRaw: 1300, source: "出厂默认" },
     baseMoisture: 33, waterEvents: [], luxPeak: 2400, tempBase: 20.6,
   },

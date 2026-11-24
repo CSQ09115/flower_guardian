@@ -145,6 +145,144 @@ def get_watering_advice(weather: Dict[str, Any]) -> str:
 # 和风天气 API 内置默认地址（非敏感默认值，允许代码内置）
 HEFENG_BASE = "https://devapi.qweather.com/v7"
 
+# Open-Meteo 空气质量 API（免费，无需 Key）
+OPEN_METEO_AIR_URL = "https://air-quality-api.open-meteo.com/v1/air-quality"
+
+# WMO 天气代码 → (中文描述, 和风天气图标代码)：Open-Meteo 降级时保持前端展示兼容
+_WMO_MAP = {
+    0: ("晴", 100), 1: ("多云", 101), 2: ("少云", 102), 3: ("阴", 104),
+    45: ("雾", 501), 48: ("雾", 501),
+    51: ("毛毛雨", 300), 53: ("毛毛雨", 300), 55: ("毛毛雨", 300),
+    56: ("冻毛毛雨", 301), 57: ("冻毛毛雨", 301),
+    61: ("小雨", 305), 63: ("中雨", 306), 65: ("大雨", 307),
+    66: ("冻雨", 301), 67: ("冻雨", 301),
+    71: ("小雪", 400), 73: ("中雪", 401), 75: ("大雪", 402), 77: ("雪粒", 400),
+    80: ("小雨", 305), 81: ("中雨", 306), 82: ("大雨", 307),
+    85: ("阵雪", 407), 86: ("阵雪", 407),
+    95: ("雷阵雨", 302), 96: ("雷阵雨伴冰雹", 304), 99: ("雷阵雨伴冰雹", 304),
+}
+
+# 蒲福风级上限（km/h）
+_BEAUFORT = [1, 5, 11, 19, 28, 38, 49, 61, 74, 88, 102, 117]
+
+
+def _wind_scale_km_h(speed: float) -> str:
+    level = sum(1 for b in _BEAUFORT if speed > b)
+    return f"{max(level, 0)}级"
+
+
+async def _reverse_geocode(latitude: float, longitude: float, client: httpx.AsyncClient) -> str:
+    """经纬度 → 中文地名（区县级），BigDataCloud 优先，Nominatim 兜底。"""
+    headers = {"User-Agent": "flower-guardian/1.0"}
+    # BigDataCloud 免费客户端接口，无需 Key，支持中文
+    try:
+        resp = await client.get(
+            "https://api.bigdatacloud.net/data/reverse-geocode-client",
+            params={
+                "latitude": latitude,
+                "longitude": longitude,
+                "localityLanguage": "zh",
+            },
+            headers=headers,
+            timeout=8,
+        )
+        if resp.status_code == 200:
+            d = resp.json()
+            city = d.get("city") or d.get("locality") or d.get("principalSubdivision")
+            if city:
+                return city
+    except Exception as e:
+        logger.warning(f"BigDataCloud 逆地理编码失败: {e}")
+
+    # OpenStreetMap Nominatim 兜底
+    try:
+        resp = await client.get(
+            "https://nominatim.openstreetmap.org/reverse",
+            params={
+                "lat": latitude,
+                "lon": longitude,
+                "format": "json",
+                "accept-language": "zh",
+                "zoom": 10,
+            },
+            headers=headers,
+            timeout=8,
+        )
+        if resp.status_code == 200:
+            addr = resp.json().get("address") or {}
+            city = addr.get("city") or addr.get("town") or addr.get("county") or addr.get("state")
+            if city:
+                return city
+    except Exception as e:
+        logger.warning(f"Nominatim 逆地理编码失败: {e}")
+
+    return "当前位置"
+
+
+async def _open_meteo_weather(latitude: float, longitude: float) -> Dict[str, Any]:
+    """Open-Meteo 免费天气源（无需 Key），作为和风天气不可用时的降级方案。"""
+    params = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "current": "temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m",
+        "daily": "temperature_2m_max,temperature_2m_min,uv_index_max",
+        "timezone": "Asia/Shanghai",
+        "forecast_days": 1,
+    }
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        resp = await client.get(OPEN_METEO_URL, params=params)
+        if resp.status_code != 200:
+            raise Exception("Open-Meteo 获取天气数据失败")
+        data = resp.json()
+
+        current = data.get("current", {})
+        daily = data.get("daily") or {}
+
+        code = int(current.get("weather_code", 0) or 0)
+        text, icon = _WMO_MAP.get(code, ("未知", ""))
+        uv_list = daily.get("uv_index_max") or []
+        uv = int(float(uv_list[0])) if uv_list else 0
+
+        def _daily_first(key: str) -> float:
+            vals = daily.get(key) or []
+            return float(vals[0]) if vals else 0.0
+
+        # 逆向地理编码取真实地名（失败不影响主流程）
+        location = "当前位置"
+        try:
+            location = await _reverse_geocode(latitude, longitude, client)
+        except Exception as e:
+            logger.warning(f"获取地名失败: {e}")
+
+        info = {
+            "temp": int(float(current.get("temperature_2m", 0) or 0)),
+            "tempMax": int(_daily_first("temperature_2m_max")),
+            "tempMin": int(_daily_first("temperature_2m_min")),
+            "humidity": int(float(current.get("relative_humidity_2m", 0) or 0)),
+            "condition": text,
+            "conditionIcon": str(icon),
+            "airQuality": "未知",
+            "uvIndex": uv,
+            "windSpeed": _wind_scale_km_h(float(current.get("wind_speed_10m", 0) or 0)),
+            "location": location,
+        }
+
+        # 空气质量（可选，失败不影响主流程）
+        try:
+            air = await client.get(
+                OPEN_METEO_AIR_URL,
+                params={"latitude": latitude, "longitude": longitude, "current": "us_aqi"},
+            )
+            if air.status_code == 200:
+                aqi = (air.json().get("current") or {}).get("us_aqi")
+                if aqi is not None:
+                    info["airQuality"] = str(int(float(aqi)))
+        except Exception as e:
+            logger.warning(f"Open-Meteo 空气质量获取失败: {e}")
+
+        logger.info(f"获取天气数据成功(Open-Meteo): {info.get('condition')}")
+        return info
+
 
 async def get_weather_data(latitude: float, longitude: float) -> Dict[str, Any]:
     """
@@ -165,6 +303,18 @@ async def get_weather_data(latitude: float, longitude: float) -> Dict[str, Any]:
     if not api_key:
         raise ValueError("天气 API 未配置，请在后台「系统配置 - 天气 API」中填写 API Key")
 
+    # 先尝试和风天气；2025 改版后新账号必须使用控制台分配的专属 API Host，
+    # 旧域名会返回 Invalid Host(403)，此时自动降级到 Open-Meteo 免费源
+    try:
+        return await _qweather_weather(latitude, longitude, api_key, base_url)
+    except Exception as e:
+        logger.warning(f"和风天气不可用，降级 Open-Meteo: {e}")
+
+    return await _open_meteo_weather(latitude, longitude)
+
+
+async def _qweather_weather(latitude: float, longitude: float, api_key: str, base_url: str) -> Dict[str, Any]:
+    """和风天气数据获取（保留原逻辑，供配置了专属 API Host 的账号使用）"""
     # 先调用地理编码API获取城市名称
     location_name = "未知"
     try:

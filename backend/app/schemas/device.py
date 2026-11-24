@@ -88,6 +88,10 @@ class ThresholdPayload(BaseModel):
     moistureMax: float = Field(70, ge=0, le=100)
     tempMin: float = Field(12, ge=-40, le=80)
     tempMax: float = Field(30, ge=-40, le=80)
+    airTempMin: float = Field(5, ge=-40, le=80)
+    airTempMax: float = Field(35, ge=-40, le=80)
+    airHumidityMin: float = Field(20, ge=0, le=100)
+    airHumidityMax: float = Field(90, ge=0, le=100)
     luxMin: float = Field(500, ge=0)
     luxMax: float = Field(30000, ge=0)
     alarm: bool = True
